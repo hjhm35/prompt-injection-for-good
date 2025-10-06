@@ -1,0 +1,1572 @@
+{% extends "base.html" %}
+
+{% block title %}Bulk Evaluation - Prompt Injection for Good{% endblock %}
+
+{% block extra_css %}
+    <style>
+        .run-card {
+        border: 1px solid var(--color-border);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .run-card:hover {
+        border-color: var(--color-primary);
+        box-shadow: var(--shadow-brand-sm);
+        }
+        .run-card.selected {
+        border-color: var(--color-primary);
+        background-color: var(--color-background-soft);
+        }
+        .pattern-tag {
+            display: inline-block;
+        background: var(--color-background-soft);
+        border: 1px solid var(--color-border);
+            border-radius: 0.375rem;
+            padding: 0.25rem 0.5rem;
+            margin: 0.25rem;
+            font-size: 0.875rem;
+        color: var(--color-text);
+        }
+        .pattern-tag .remove-btn {
+            margin-left: 0.5rem;
+        color: var(--bs-danger);
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .security-summary {
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+        }
+        .summary-pass { background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); }
+        .summary-fail { background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); }
+    .summary-review { background: linear-gradient(135deg, var(--brand-lemon) 0%, rgba(var(--brand-lemon-rgb), 0.8) 100%); }
+        .result-row {
+        border-bottom: 1px solid var(--color-border);
+            padding: 0.75rem 0;
+        }
+    .performance-matrix {
+        font-size: 0.875rem;
+    }
+    .performance-matrix th,
+    .performance-matrix td {
+        padding: 0.5rem;
+        text-align: center;
+        vertical-align: middle;
+    }
+    .performance-matrix .prompt-header {
+        max-width: 200px;
+        word-wrap: break-word;
+        text-align: left;
+    }
+    .matrix-cell {
+        position: relative;
+        cursor: pointer;
+    }
+    .matrix-cell.success {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    .matrix-cell.failure {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    .matrix-cell.partial {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+    .provider-header {
+        border-bottom: 2px solid var(--color-border) !important;
+        font-weight: bold;
+        background: var(--color-background-soft) !important;
+    }
+    .model-header {
+        writing-mode: horizontal-tb;
+        max-width: 120px;
+        word-wrap: break-word;
+        font-size: 0.8rem;
+    }
+    .security-injection-row {
+        border-left: 3px solid #dc3545;
+        background-color: rgba(220, 53, 69, 0.05);
+    }
+    .matrix-cell.best-performer {
+        position: relative;
+    }
+    .matrix-cell.best-performer::after {
+        content: '🏆';
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        font-size: 0.7rem;
+    }
+    .matrix-cell.worst-performer {
+        position: relative;
+    }
+    .matrix-cell.worst-performer::after {
+        content: '⚠️';
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        font-size: 0.7rem;
+    }
+    .matrix-cell.no-data {
+        background-color: #f8f9fa;
+        color: #6c757d;
+    }
+    .security-injection-row {
+        border-left: 4px solid #dc3545;
+    }
+        .result-row:last-child { border-bottom: none; }
+        .compliance-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+    .badge-pass { background: var(--bs-success); color: white; }
+    .badge-fail { background: var(--bs-danger); color: white; }
+    .badge-review { background: var(--brand-lemon); color: var(--brand-grey); }
+        .progress-container {
+            margin: 1rem 0;
+        }
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+        }
+        .step {
+            flex: 1;
+            text-align: center;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            margin: 0 0.25rem;
+        }
+    .step.active { background: var(--color-primary); color: white; }
+    .step.completed { background: var(--bs-success); color: white; }
+    .step.inactive { background: var(--color-surface); color: var(--color-text-light); }
+    
+    /* Brand-enhanced cards */
+    .card {
+        border-color: var(--color-border);
+        box-shadow: var(--shadow-brand-sm);
+    }
+    
+    .card-header {
+        background-color: var(--color-background-soft);
+        border-bottom-color: var(--color-border);
+    }
+    </style>
+{% endblock %}
+
+{% block content %}
+<!-- Main Header -->
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4><svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" /></svg> Automatic Document Evaluation</h4>
+            </div>
+            <div class="card-body">
+                <p class="mb-0">Evaluate prompt effectiveness across entire document runs. This is particularly useful for CISOs who have evaluated many documents and want to analyze overall security compliance. You can also manually review individual outputs in the Results page for detailed analysis.</p>
+        </div>
+        </div>
+    </div>
+</div>
+
+        <!-- Step Indicator -->
+        <div class="step-indicator">
+            <div class="step active" id="step1">1. Select Run</div>
+            <div class="step inactive" id="step2">2. Configure Patterns</div>
+            <div class="step inactive" id="step3">3. Run Evaluation</div>
+            <div class="step inactive" id="step4">4. View Results</div>
+        </div>
+
+        <!-- Step 1: Run Selection -->
+        <div id="runSelectionStep" class="step-content">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5>Select Evaluation Run</h5>
+                    <div class="d-flex gap-2">
+                        <select class="form-select form-select-sm" id="runSortOrder" style="width: auto;">
+                            <option value="desc">Newest First</option>
+                            <option value="asc">Oldest First</option>
+                            <option value="number_desc">Run # (High to Low)</option>
+                            <option value="number_asc">Run # (Low to High)</option>
+                        </select>
+                        <select class="form-select form-select-sm" id="runStatusFilter" style="width: auto;">
+                            <option value="all">All Runs</option>
+                            <option value="completed">Complete Only</option>
+                            <option value="partial">Partial Only</option>
+                            <option value="failed">Failed Only</option>
+                        </select>
+                    </div>
+                        </div>
+                        <div class="card-body">
+                    <div id="runsInfo" class="mb-3" style="display: none;">
+                        <!-- Run summary info will be displayed here -->
+                    </div>
+                            <div id="runsList">
+                                <div class="text-center">
+                                    <div class="spinner-border" role="status">
+                                        <span class="visually-hidden">Loading runs...</span>
+                                    </div>
+                                    <p class="mt-2">Loading evaluation runs...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6>Selected Run Details</h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="runDetails">
+                                <p class="text-muted">Select a run to see details</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-3">
+        <button class="btn btn-brand-primary" id="nextToPatterns" disabled>Next: Configure Patterns →</button>
+            </div>
+        </div>
+
+        <!-- Step 2: Pattern Configuration -->
+        <div id="patternConfigStep" class="step-content" style="display: none;">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Security Pattern Configuration</h5>
+                        </div>
+                        <div class="card-body">
+                    <div class="mb-3">
+                        <label for="evaluationMode" class="form-label">Evaluation Mode</label>
+                        <select class="form-select" id="evaluationMode">
+                            <option value="simple">Simple String Matching (Fast)</option>
+                            <option value="advanced">Advanced LLM-Based Evaluation (Comprehensive)</option>
+                        </select>
+                        <div class="form-text" id="evaluationModeHelp">
+                            <strong>Simple:</strong> Fast pattern matching - checks if security strings appear in responses<br>
+                            <strong>Advanced:</strong> Uses judge model to evaluate security compliance with reasoning
+                        </div>
+                    </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Default Security Patterns</label>
+                                <div id="defaultPatterns"></div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="customPattern" class="form-label">Add Custom Pattern</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="customPattern" 
+                                           placeholder="Enter a security warning pattern to detect...">
+                                    <button class="btn btn-outline-secondary" type="button" id="addPattern">Add Pattern</button>
+                                </div>
+                                <div class="form-text">Examples: "Confidential", "⚠️ Security Alert", "Access Denied"</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Custom Patterns</label>
+                                <div id="customPatterns">
+                                    <p class="text-muted">No custom patterns added yet</p>
+                                </div>
+                            </div>
+
+                    <div id="advancedOptions" style="display: none;">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="judgeModel" class="form-label">Judge Model</label>
+                                        <select class="form-select" id="judgeModel">
+                                            <option value="gpt-4">GPT-4</option>
+                                            <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                                            <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="judgeProvider" class="form-label">Judge Provider</label>
+                                        <select class="form-select" id="judgeProvider">
+                                            <option value="openai">OpenAI</option>
+                                            <option value="anthropic">Anthropic</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="expectedResponseType" class="form-label">Expected Response Type</label>
+                                <select class="form-select" id="expectedResponseType">
+                                    <option value="standard">Standard (Recommended)</option>
+                                    <option value="acknowledgment">Acknowledgment</option>
+                                    <option value="strict">Strict Refusal</option>
+                                    <option value="professional">Professional</option>
+                                    <option value="custom">Custom Template</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3" id="customTemplateDiv" style="display: none;">
+                                <label for="customTemplate" class="form-label">Custom Response Template</label>
+                                <textarea class="form-control" id="customTemplate" rows="3" 
+                                    placeholder="Define what you consider an ideal response..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <div id="simpleOptions">
+                        <div class="alert alert-info">
+                            <svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" /></svg>
+                            <strong>Simple Mode:</strong> Uses basic string matching to check if security patterns appear in LLM responses. Fast and efficient for basic security compliance checking.
+                        </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6>Pattern Summary</h6>
+                        </div>
+                        <div class="card-body">
+                            <p class="small"><strong>Total Patterns:</strong> <span id="totalPatterns">6</span></p>
+                            <p class="small"><strong>Default:</strong> <span id="defaultCount">6</span></p>
+                            <p class="small"><strong>Custom:</strong> <span id="customCount">0</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-3">
+                <button class="btn btn-secondary" id="backToRuns">← Back</button>
+        <button class="btn btn-brand-primary" id="nextToEvaluation">Next: Run Evaluation →</button>
+            </div>
+        </div>
+
+        <!-- Step 3: Running Evaluation -->
+        <div id="evaluationStep" class="step-content" style="display: none;">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Running Security Evaluation</h5>
+                </div>
+                <div class="card-body">
+                    <div id="evaluationProgress">
+                        <div class="progress mb-3">
+                            <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <p class="text-center"><span id="progressText">Preparing evaluation...</span></p>
+                        <div class="d-flex justify-content-center">
+                            <button class="btn btn-danger" id="cancelEvaluation">Cancel Evaluation</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4: Results -->
+        <div id="resultsStep" class="step-content" style="display: none;">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5>Security Evaluation Results</h5>
+                            <div>
+                                <button class="btn btn-outline-primary btn-sm" id="exportResults">Export Results</button>
+                        <button class="btn btn-brand-secondary btn-sm" id="startNewEvaluation">New Evaluation</button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="resultsSummary"></div>
+                            
+                    <!-- Prompt × Model Performance Matrix -->
+                            <div class="mt-4">
+                        <h6>Prompt × Model Performance Matrix</h6>
+                        <div class="mb-3 d-flex gap-3 align-items-center">
+                            <label class="form-check-label">
+                                <input type="checkbox" class="form-check-input" id="showOnlySecurityPrompts" checked>
+                                Show only security injection prompts
+                            </label>
+                            <select class="form-select form-select-sm" id="matrixViewMode" style="width: auto;">
+                                <option value="success_rate">Success Rate %</option>
+                                <option value="total_count">Total Evaluations</option>
+                                <option value="pass_fail">Pass/Fail Status</option>
+                            </select>
+                        </div>
+                        <div id="performanceMatrix" class="table-responsive">
+                            <!-- Matrix will be populated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <!-- Vendor & Prompt Performance Analysis -->
+                    <div class="mt-4" id="performanceAnalysis">
+                        <h6>Performance Analysis</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Vendor Performance</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="vendorPerformance" class="table-responsive">
+                                            <!-- Vendor performance will be populated by JavaScript -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Prompt Performance</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="promptPerformance" class="table-responsive">
+                                            <!-- Prompt performance will be populated by JavaScript -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>File Type Performance</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="fileTypePerformance" class="table-responsive">
+                                            <!-- File type performance will be populated by JavaScript -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <h6>Detailed Results</h6>
+                                <div class="mb-3">
+                                    <div class="row">
+                                <div class="col-md-3">
+                                    <select class="form-select form-select-sm" id="filterPrompt">
+                                        <option value="">All Prompts</option>
+                                            </select>
+                                        </div>
+                                <div class="col-md-3">
+                                            <select class="form-select form-select-sm" id="filterModel">
+                                                <option value="">All Models</option>
+                                            </select>
+                                        </div>
+                                <div class="col-md-3">
+                                    <select class="form-select form-select-sm" id="filterCompliance">
+                                        <option value="">All Results</option>
+                                        <option value="Pass">Pass Only</option>
+                                        <option value="Fail">Fail Only</option>
+                                        <option value="Review">Review Only</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                            <input type="text" class="form-control form-control-sm" id="searchResults" 
+                                                   placeholder="Search in responses...">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="individualResults"></div>
+                            </div>
+                        </div>
+                    </div>
+        </div>
+    </div>
+</div>
+
+<!-- Details Modal -->
+<div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="detailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="detailsModalLabel">Security Evaluation Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="modalContent">
+                    <!-- Content will be populated by JavaScript -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        // Global state
+        let selectedRun = null;
+        let defaultPatterns = ['security', 'confidential', 'protected', 'restricted', 'private', 'sensitive'];
+        let activeDefaultPatterns = [...defaultPatterns]; // Initially all active
+        let customPatterns = [];
+        let evaluationResults = null;
+
+        // Load evaluation runs on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadEvaluationRuns();
+            setupEventListeners();
+        });
+    
+    function checkUrlParameters() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const runParam = urlParams.get('run');
+        
+        if (runParam) {
+            document.getElementById('runNumberFilter').value = runParam;
+            showAlert(`Auto-selecting Run #${runParam} from URL parameter`, 'info');
+        }
+    }
+
+        function setupEventListeners() {
+            // Step navigation
+            document.getElementById('nextToPatterns').addEventListener('click', () => showStep(2));
+            document.getElementById('backToRuns').addEventListener('click', () => showStep(1));
+            document.getElementById('nextToEvaluation').addEventListener('click', startEvaluation);
+            document.getElementById('startNewEvaluation').addEventListener('click', () => showStep(1));
+
+            // Pattern management
+            document.getElementById('addPattern').addEventListener('click', addCustomPattern);
+            document.getElementById('customPattern').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') addCustomPattern();
+            });
+
+        // Evaluation mode configuration
+        document.getElementById('evaluationMode').addEventListener('change', function() {
+            const advancedOptions = document.getElementById('advancedOptions');
+            const simpleOptions = document.getElementById('simpleOptions');
+            const expectedResponseType = document.getElementById('expectedResponseType');
+            
+            if (this.value === 'advanced') {
+                advancedOptions.style.display = 'block';
+                simpleOptions.style.display = 'none';
+                // Set response type to standard when switching to advanced mode
+                expectedResponseType.value = 'standard';
+                // Load models when switching to advanced mode
+                loadAvailableModels();
+            } else {
+                advancedOptions.style.display = 'none';
+                simpleOptions.style.display = 'block';
+            }
+        });
+
+        // Judge provider change - update model list
+        document.getElementById('judgeProvider').addEventListener('change', function() {
+            loadAvailableModels();
+        });
+
+            // Template configuration
+            document.getElementById('expectedResponseType').addEventListener('change', function() {
+                const customDiv = document.getElementById('customTemplateDiv');
+                customDiv.style.display = this.value === 'custom' ? 'block' : 'none';
+            });
+
+            // Results filtering
+            document.getElementById('filterCompliance').addEventListener('change', filterResults);
+            document.getElementById('filterModel').addEventListener('change', filterResults);
+            document.getElementById('searchResults').addEventListener('input', filterResults);
+        }
+
+        function showStep(stepNumber) {
+            // Update step indicators
+            for (let i = 1; i <= 4; i++) {
+                const step = document.getElementById(`step${i}`);
+                if (i < stepNumber) {
+                    step.className = 'step completed';
+                } else if (i === stepNumber) {
+                    step.className = 'step active';
+                } else {
+                    step.className = 'step inactive';
+                }
+            }
+
+            // Show/hide step content
+            document.querySelectorAll('.step-content').forEach(el => el.style.display = 'none');
+            
+            const stepNames = ['', 'runSelectionStep', 'patternConfigStep', 'evaluationStep', 'resultsStep'];
+            document.getElementById(stepNames[stepNumber]).style.display = 'block';
+
+            // Load default patterns if moving to step 2
+            if (stepNumber === 2) {
+                loadDefaultPatterns();
+            }
+        }
+
+    let allRuns = [];
+
+        async function loadEvaluationRuns() {
+            try {
+                const response = await fetch('/api/evaluation/runs');
+                const data = await response.json();
+                
+                if (data.success) {
+                allRuns = data.runs;
+                
+                // Show helpful info about runs
+                displayRunsInfo(data.debug_info);
+                displayEvaluationRuns(allRuns);
+                setupRunFilters();
+                } else {
+                    document.getElementById('runsList').innerHTML = 
+                        '<div class="alert alert-warning">No evaluation runs found</div>';
+                }
+            } catch (error) {
+                console.error('Error loading runs:', error);
+                document.getElementById('runsList').innerHTML = 
+                    '<div class="alert alert-danger">Error loading evaluation runs</div>';
+            }
+        }
+
+    function displayRunsInfo(debugInfo) {
+        const runsInfoDiv = document.getElementById('runsInfo');
+        
+        if (!debugInfo || !debugInfo.all_available_run_numbers) {
+            runsInfoDiv.style.display = 'none';
+            return;
+        }
+        
+        const totalRuns = debugInfo.total_runs_returned;
+        const availableRuns = debugInfo.all_available_run_numbers;
+        const missingRuns = debugInfo.missing_runs;
+        
+        let infoHtml = `<small class="text-muted">Showing ${totalRuns} evaluation run${totalRuns !== 1 ? 's' : ''}`;
+        
+        if (availableRuns.length > 0) {
+            const minRun = Math.min(...availableRuns);
+            const maxRun = Math.max(...availableRuns);
+            infoHtml += ` (Run #${minRun} to #${maxRun})`;
+            
+        }
+        
+        infoHtml += `</small>`;
+        
+        runsInfoDiv.innerHTML = infoHtml;
+        runsInfoDiv.style.display = 'block';
+    }
+
+    function setupRunFilters() {
+        document.getElementById('runSortOrder').addEventListener('change', applyRunFilters);
+        document.getElementById('runStatusFilter').addEventListener('change', applyRunFilters);
+    }
+    
+    function applyRunFilters() {
+        const sortOrder = document.getElementById('runSortOrder').value;
+        const statusFilter = document.getElementById('runStatusFilter').value;
+        
+        let filteredRuns = [...allRuns];
+        
+        // Apply status filter
+        if (statusFilter !== 'all') {
+            filteredRuns = filteredRuns.filter(run => run.status === statusFilter);
+        }
+        
+        // Apply sorting
+        filteredRuns.sort((a, b) => {
+            switch (sortOrder) {
+                case 'desc':
+                    return new Date(b.latest_timestamp) - new Date(a.latest_timestamp);
+                case 'asc':
+                    return new Date(a.latest_timestamp) - new Date(b.latest_timestamp);
+                case 'number_desc':
+                    return b.run_number - a.run_number;
+                case 'number_asc':
+                    return a.run_number - b.run_number;
+                default:
+                    return b.run_number - a.run_number;
+            }
+        });
+        
+        displayEvaluationRuns(filteredRuns, false);
+    }
+
+    function displayEvaluationRuns(runs, checkUrlParams = true) {
+            const runsList = document.getElementById('runsList');
+            
+            if (runs.length === 0) {
+            runsList.innerHTML = '<div class="alert alert-info">No evaluation runs match the current filters.</div>';
+                return;
+            }
+
+            let html = '';
+            runs.forEach(run => {
+            const formattedDate = run.latest_timestamp ? 
+                new Date(run.latest_timestamp).toLocaleString() : 
+                'Unknown date';
+                
+                html += `
+                    <div class="run-card" onclick="selectRun(${run.run_number})">
+                        <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                                <h6 class="mb-1">Run #${run.run_number}</h6>
+                            <p class="mb-1 text-muted">${run.total_evaluations} evaluations • ${run.unique_models} models • ${run.successful_evaluations}/${run.total_evaluations} successful (${run.completion_rate.toFixed(1)}%)</p>
+                            <small class="text-muted">${formattedDate}</small>
+                            </div>
+                            <div class="text-end">
+                            <div class="mb-1">
+                                <span class="badge ${run.status === 'completed' ? 'bg-success' : run.status === 'partial' ? 'bg-warning' : 'bg-danger'}">
+                                    ${run.status === 'completed' ? 'Complete' : run.status === 'partial' ? 'Partial' : 'Failed'}
+                                </span>
+                            </div>
+                            <small class="text-muted">${run.providers.join(', ')}</small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            runsList.innerHTML = html;
+        
+        // Check if there's a run parameter in URL and auto-select it
+        if (checkUrlParams) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const runParam = urlParams.get('run');
+            if (runParam) {
+                const runNumber = parseInt(runParam);
+                const targetRun = runs.find(run => run.run_number === runNumber);
+                if (targetRun) {
+                    selectRun(runNumber);
+                }
+            }
+        }
+        }
+
+        function selectRun(runNumber) {
+            // Update UI
+            document.querySelectorAll('.run-card').forEach(card => card.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+            
+            // Store selection
+            selectedRun = runNumber;
+            
+            // Enable next button
+            document.getElementById('nextToPatterns').disabled = false;
+            
+            // Load run details
+            loadRunDetails(runNumber);
+        }
+
+        async function loadRunDetails(runNumber) {
+            try {
+                const response = await fetch(`/api/results/${runNumber}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayRunDetails(data.statistics, data.results);
+                }
+            } catch (error) {
+                console.error('Error loading run details:', error);
+            }
+        }
+
+        function displayRunDetails(stats, results) {
+            const detailsDiv = document.getElementById('runDetails');
+        
+        // Calculate accurate success rate excluding system failures
+        const validEvaluations = stats.valid_evaluations || (stats.total_evaluations - (stats.system_failures || 0));
+        const successRatePercent = validEvaluations > 0 ? ((stats.successful_evaluations || 0) / validEvaluations * 100) : 0;
+            
+            detailsDiv.innerHTML = `
+                <p><strong>Total Results:</strong> ${stats.total_evaluations}</p>
+            ${stats.system_failures > 0 ? `<p><strong>System Failures:</strong> <span class="text-warning">${stats.system_failures}</span> (excluded from success rate)</p>` : ''}
+            <p><strong>Valid Evaluations:</strong> ${validEvaluations}</p>
+            <p><strong>Success Rate:</strong> ${successRatePercent.toFixed(1)}% <small class="text-muted">(${stats.successful_evaluations || 0}/${validEvaluations} valid)</small></p>
+                <p><strong>Models:</strong> ${stats.unique_models}</p>
+                <p><strong>Providers:</strong> ${stats.unique_providers}</p>
+                <p><strong>Avg Response Time:</strong> ${stats.avg_response_time ? stats.avg_response_time.toFixed(2) + 's' : 'N/A'}</p>
+            `;
+        }
+
+        async function loadDefaultPatterns() {
+            try {
+                const response = await fetch('/api/security/templates');
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Initialize default patterns from server if available, otherwise use hardcoded
+                    if (data.templates && data.templates.security_patterns) {
+                        defaultPatterns = data.templates.security_patterns;
+                        activeDefaultPatterns = [...defaultPatterns];
+                    }
+                    displayDefaultPatterns();
+                }
+            } catch (error) {
+                console.error('Error loading patterns:', error);
+                // Use hardcoded defaults on error
+                displayDefaultPatterns();
+            }
+        }
+
+        function displayDefaultPatterns() {
+            const patternsDiv = document.getElementById('defaultPatterns');
+            
+            if (activeDefaultPatterns.length === 0) {
+                patternsDiv.innerHTML = '<p class="text-muted">All default patterns removed</p>';
+                updatePatternCounts();
+                return;
+            }
+            
+            let html = '';
+            activeDefaultPatterns.forEach(pattern => {
+                html += `
+                    <span class="pattern-tag">
+                        ${pattern}
+                        <span class="remove-btn" onclick="removeDefaultPattern('${pattern}')">×</span>
+                    </span>
+                `;
+            });
+            
+            patternsDiv.innerHTML = html;
+            updatePatternCounts();
+        }
+
+        function removeDefaultPattern(pattern) {
+            activeDefaultPatterns = activeDefaultPatterns.filter(p => p !== pattern);
+            displayDefaultPatterns();
+        }
+
+        function addCustomPattern() {
+            const input = document.getElementById('customPattern');
+            const pattern = input.value.trim();
+            
+            if (!pattern) return;
+            
+            // Check if this is a removed default pattern - restore it
+            if (defaultPatterns.includes(pattern) && !activeDefaultPatterns.includes(pattern)) {
+                activeDefaultPatterns.push(pattern);
+                input.value = '';
+                displayDefaultPatterns();
+                return;
+            }
+            
+            // Add as custom pattern if not already exists and not in active defaults
+            if (!customPatterns.includes(pattern) && !activeDefaultPatterns.includes(pattern)) {
+                customPatterns.push(pattern);
+                input.value = '';
+                displayCustomPatterns();
+                updatePatternCounts();
+            } else if (activeDefaultPatterns.includes(pattern) || customPatterns.includes(pattern)) {
+                input.value = '';
+                // Could show a message that pattern already exists
+            }
+        }
+
+        function displayCustomPatterns() {
+            const patternsDiv = document.getElementById('customPatterns');
+            
+            if (customPatterns.length === 0) {
+                patternsDiv.innerHTML = '<p class="text-muted">No custom patterns added yet</p>';
+                return;
+            }
+            
+            let html = '';
+            customPatterns.forEach((pattern, index) => {
+                html += `
+                    <span class="pattern-tag">
+                        ${pattern}
+                        <span class="remove-btn" onclick="removeCustomPattern(${index})">×</span>
+                    </span>
+                `;
+            });
+            
+            patternsDiv.innerHTML = html;
+        }
+
+        function removeCustomPattern(index) {
+            customPatterns.splice(index, 1);
+            displayCustomPatterns();
+            updatePatternCounts();
+        }
+
+        function updatePatternCounts() {
+            const totalActive = activeDefaultPatterns.length + customPatterns.length;
+            document.getElementById('totalPatterns').textContent = totalActive;
+            document.getElementById('defaultCount').textContent = activeDefaultPatterns.length;
+            document.getElementById('customCount').textContent = customPatterns.length;
+        }
+
+        function getAllActivePatterns() {
+            return [...activeDefaultPatterns, ...customPatterns];
+        }
+
+        async function startEvaluation() {
+            showStep(3);
+            
+            const evaluationConfig = {
+                run_number: selectedRun,
+            evaluation_mode: document.getElementById('evaluationMode').value,
+                judge_model: document.getElementById('judgeModel').value,
+                judge_provider: document.getElementById('judgeProvider').value,
+                expected_response_type: document.getElementById('expectedResponseType').value,
+                custom_response_template: document.getElementById('customTemplate').value,
+                security_patterns: getAllActivePatterns()
+            };
+
+            try {
+                const response = await fetch('/api/security/evaluate-run', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(evaluationConfig)
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    evaluationResults = data.security_evaluations;
+                    displayResults(data.security_evaluations, data.summary);
+                    showStep(4);
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                console.error('Evaluation error:', error);
+            showAlert('Evaluation failed: ' + error.message, 'error');
+                showStep(2);
+            }
+        }
+
+        function displayResults(results, summary) {
+            displayResultsSummary(summary);
+        loadAndDisplayMatrix();
+        displayPerformanceAnalysis(summary);
+            displayIndividualResults(results);
+            populateFilterOptions(results);
+        }
+
+        function displayResultsSummary(summary) {
+            const summaryDiv = document.getElementById('resultsSummary');
+            
+            const passRate = (summary.pass_rate * 100).toFixed(1);
+            const failRate = (summary.fail_rate * 100).toFixed(1);
+            const reviewRate = (100 - parseFloat(passRate) - parseFloat(failRate)).toFixed(1);
+            
+            summaryDiv.innerHTML = `
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="security-summary summary-pass">
+                            <h6 class="text-success mb-1">Pass</h6>
+                            <h4 class="mb-0">${passRate}%</h4>
+                            <small>Properly handled security warnings</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="security-summary summary-fail">
+                            <h6 class="text-danger mb-1">Fail</h6>
+                            <h4 class="mb-0">${failRate}%</h4>
+                            <small>Violated security protocols</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="security-summary summary-review">
+                            <h6 class="text-warning mb-1">Review</h6>
+                            <h4 class="mb-0">${reviewRate}%</h4>
+                            <small>Require manual review</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <p><strong>Average Security Score:</strong> ${summary.average_score?.toFixed(2)}/5</p>
+                    <p><strong>Total Evaluations:</strong> ${summary.total_evaluations}</p>
+                ${summary.cancelled_evaluations > 0 ? `<p><strong>Excluded Failed/Cancelled:</strong> <span class="text-muted">${summary.cancelled_evaluations}</span></p>` : ''}
+                <p><strong>Evaluation Mode:</strong> <span class="badge ${summary.evaluation_mode === 'advanced' ? 'bg-primary' : 'bg-secondary'}">${summary.evaluation_mode === 'advanced' ? 'Advanced LLM-Based' : 'Simple String Matching'}</span></p>
+                </div>
+            `;
+        }
+    
+    function displayPerformanceAnalysis(summary) {
+        if (!summary.vendor_performance && !summary.prompt_performance && !summary.file_type_performance) {
+            return;
+        }
+        
+        // Vendor Performance
+        const vendorDiv = document.getElementById('vendorPerformance');
+        if (summary.vendor_performance && Object.keys(summary.vendor_performance).length > 0) {
+            let vendorHtml = `
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Vendor</th>
+                            <th>Models</th>
+                            <th>Pass Rate</th>
+                            <th>Avg Score</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            const sortedVendors = Object.entries(summary.vendor_performance)
+                .sort(([,a], [,b]) => (b.pass / b.total) - (a.pass / a.total));
+            
+            sortedVendors.forEach(([vendor, stats]) => {
+                const passRate = ((stats.pass / stats.total) * 100).toFixed(1);
+                const avgScore = stats.avg_score.toFixed(2);
+                const modelCount = stats.models.length;
+                
+                vendorHtml += `
+                    <tr>
+                        <td><strong>${vendor}</strong></td>
+                        <td><small>${modelCount} models</small></td>
+                        <td>
+                            <span class="badge ${passRate >= 80 ? 'bg-success' : passRate >= 60 ? 'bg-warning' : 'bg-danger'}">
+                                ${passRate}%
+                            </span>
+                        </td>
+                        <td>${avgScore}/5</td>
+                        <td>${stats.total}</td>
+                    </tr>
+                `;
+            });
+            
+            vendorHtml += '</tbody></table>';
+            vendorDiv.innerHTML = vendorHtml;
+        } else {
+            vendorDiv.innerHTML = '<p class="text-muted">No vendor performance data available</p>';
+        }
+        
+        // Prompt Performance
+        const promptDiv = document.getElementById('promptPerformance');
+        if (summary.prompt_performance && Object.keys(summary.prompt_performance).length > 0) {
+            let promptHtml = `
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Prompt</th>
+                            <th>Pass Rate</th>
+                            <th>Avg Score</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            const sortedPrompts = Object.entries(summary.prompt_performance)
+                .sort(([,a], [,b]) => (b.pass / b.total) - (a.pass / a.total))
+                .slice(0, 10); // Show top 10 prompts
+            
+            sortedPrompts.forEach(([prompt, stats]) => {
+                const passRate = ((stats.pass / stats.total) * 100).toFixed(1);
+                const avgScore = stats.avg_score.toFixed(2);
+                const displayPrompt = prompt.length > 40 ? prompt.substring(0, 40) + '...' : prompt;
+                
+                promptHtml += `
+                    <tr>
+                        <td title="${prompt}"><small>${displayPrompt}</small></td>
+                        <td>
+                            <span class="badge ${passRate >= 80 ? 'bg-success' : passRate >= 60 ? 'bg-warning' : 'bg-danger'}">
+                                ${passRate}%
+                            </span>
+                        </td>
+                        <td>${avgScore}/5</td>
+                        <td>${stats.total}</td>
+                    </tr>
+                `;
+            });
+            
+            if (Object.keys(summary.prompt_performance).length > 10) {
+                promptHtml += `<tr><td colspan="4" class="text-muted"><small>... and ${Object.keys(summary.prompt_performance).length - 10} more prompts</small></td></tr>`;
+            }
+            
+            promptHtml += '</tbody></table>';
+            promptDiv.innerHTML = promptHtml;
+        } else {
+            promptDiv.innerHTML = '<p class="text-muted">No prompt performance data available</p>';
+        }
+        
+        // File Type Performance
+        const fileTypeDiv = document.getElementById('fileTypePerformance');
+        if (summary.file_type_performance && Object.keys(summary.file_type_performance).length > 0) {
+            let fileTypeHtml = `
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>File Type</th>
+                            <th>Pass Rate</th>
+                            <th>Avg Score</th>
+                            <th>Total Evaluations</th>
+                            <th>Distribution</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            const sortedFileTypes = Object.entries(summary.file_type_performance)
+                .sort(([,a], [,b]) => b.total - a.total);
+            
+            sortedFileTypes.forEach(([fileType, stats]) => {
+                const passRate = ((stats.pass / stats.total) * 100).toFixed(1);
+                const avgScore = stats.avg_score.toFixed(2);
+                
+                fileTypeHtml += `
+                    <tr>
+                        <td><code>.${fileType}</code></td>
+                        <td>
+                            <span class="badge ${passRate >= 80 ? 'bg-success' : passRate >= 60 ? 'bg-warning' : 'bg-danger'}">
+                                ${passRate}%
+                            </span>
+                        </td>
+                        <td>${avgScore}/5</td>
+                        <td>${stats.total}</td>
+                        <td>
+                            <small class="text-muted">
+                                Pass: ${stats.pass} | Fail: ${stats.fail} | Review: ${stats.review}
+                            </small>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            fileTypeHtml += '</tbody></table>';
+            fileTypeDiv.innerHTML = fileTypeHtml;
+        } else {
+            fileTypeDiv.innerHTML = '<p class="text-muted">No file type performance data available</p>';
+        }
+    }
+
+        function displayIndividualResults(results) {
+            const resultsDiv = document.getElementById('individualResults');
+            let html = '';
+            
+            results.forEach((result, index) => {
+                const compliance = result.compliance_score || 'Review';
+                const badgeClass = `badge-${compliance.toLowerCase()}`;
+                
+                html += `
+                    <div class="result-row" data-compliance="${compliance}" data-model="${result.model_version || ''}" data-response="${(result.ai_response || '').toLowerCase()}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center mb-2">
+                                    <span class="compliance-badge ${badgeClass}">${compliance}</span>
+                                    <span class="ms-2 text-muted">${result.model_version || 'Unknown Model'}</span>
+                                    <span class="ms-2 badge bg-light text-dark">${result.overall_score}/5</span>
+                                </div>
+                                <p class="mb-1"><strong>File:</strong> ${result.file_name || 'Unknown'}</p>
+                                <p class="mb-1 small text-muted">${result.reasoning || 'No reasoning provided'}</p>
+                                ${result.security_violations && result.security_violations.length > 0 ? 
+                                    `<p class="mb-0 small text-danger"><strong>Violations:</strong> ${result.security_violations.join(', ')}</p>` : ''}
+                            </div>
+                            <div class="text-end">
+                                <button class="btn btn-sm btn-outline-secondary" onclick="viewDetails(${index})">Details</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            resultsDiv.innerHTML = html;
+        }
+
+        function populateFilterOptions(results) {
+            const modelFilter = document.getElementById('filterModel');
+            const models = [...new Set(results.map(r => r.model_version).filter(Boolean))];
+            
+            modelFilter.innerHTML = '<option value="">All Models</option>';
+            models.forEach(model => {
+                modelFilter.innerHTML += `<option value="${model}">${model}</option>`;
+            });
+        }
+
+        function filterResults() {
+            const complianceFilter = document.getElementById('filterCompliance').value;
+            const modelFilter = document.getElementById('filterModel').value;
+            const searchText = document.getElementById('searchResults').value.toLowerCase();
+            
+            document.querySelectorAll('.result-row').forEach(row => {
+                const compliance = row.dataset.compliance;
+                const model = row.dataset.model;
+                const response = row.dataset.response;
+                
+                const matchesCompliance = !complianceFilter || compliance === complianceFilter;
+                const matchesModel = !modelFilter || model === modelFilter;
+                const matchesSearch = !searchText || response.includes(searchText);
+                
+                row.style.display = (matchesCompliance && matchesModel && matchesSearch) ? 'block' : 'none';
+            });
+        }
+
+        function viewDetails(index) {
+            const result = evaluationResults[index];
+        
+        // Create detailed content for the modal
+        const modalContent = document.getElementById('modalContent');
+        modalContent.innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Basic Information</h6>
+                    <table class="table table-sm">
+                        <tr><th>File:</th><td>${result.file_name || 'N/A'}</td></tr>
+                        <tr><th>Model:</th><td>${result.model_version || 'N/A'}</td></tr>
+                        <tr><th>Provider:</th><td>${result.llm_provider || 'N/A'}</td></tr>
+                        <tr><th>Score:</th><td>${result.overall_score || 'N/A'}/5</td></tr>
+                        <tr><th>Confidence:</th><td>${(result.confidence * 100).toFixed(1) || 'N/A'}%</td></tr>
+                        <tr><th>Compliance:</th><td>
+                            <span class="compliance-badge badge-${result.compliance_score?.toLowerCase() || 'review'}">
+                                ${result.compliance_score || 'Review'}
+                            </span>
+                        </td></tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h6>Security Analysis</h6>
+                    <table class="table table-sm">
+                        <tr><th>Match String:</th><td><code>${result.match_string || 'N/A'}</code></td></tr>
+                        <tr><th>Match Found:</th><td>
+                            <span class="badge ${result.match_found ? 'bg-success' : 'bg-secondary'}">
+                                ${result.match_found ? 'Yes' : 'No'}
+                            </span>
+                        </td></tr>
+                        <tr><th>Judge Model:</th><td>${result.judge_model || 'N/A'}</td></tr>
+                        <tr><th>Response Time:</th><td>${result.response_time || 'N/A'}s</td></tr>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <h6>Security Reasoning</h6>
+                <div class="card">
+                    <div class="card-body">
+                        <p class="mb-0">${result.reasoning || 'No reasoning provided'}</p>
+                    </div>
+                </div>
+            </div>
+            
+            ${result.security_violations && result.security_violations.length > 0 ? `
+            <div class="mt-3">
+                <h6>Security Violations</h6>
+                <ul class="list-group">
+                    ${result.security_violations.map(violation => `<li class="list-group-item list-group-item-danger">${violation}</li>`).join('')}
+                </ul>
+            </div>
+            ` : ''}
+            
+            <div class="mt-4">
+                <h6>Original Prompt</h6>
+                <div class="card">
+                    <div class="card-body">
+                        <pre class="mb-0" style="white-space: pre-wrap; max-height: 200px; overflow-y: auto;">${result.original_prompt || 'No prompt available'}</pre>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-3">
+                <h6>AI Response</h6>
+                <div class="card">
+                    <div class="card-body">
+                        <pre class="mb-0" style="white-space: pre-wrap; max-height: 200px; overflow-y: auto;">${result.ai_response || 'No response available'}</pre>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Show the modal
+        const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
+        modal.show();
+    }
+
+    // Performance Matrix Functions
+    async function loadAndDisplayMatrix() {
+        if (!selectedRun || !selectedRun.run_number) return;
+        
+        try {
+            const response = await fetch(`/api/security/detailed-results/${selectedRun.run_number}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                displayPerformanceMatrix(data);
+                populatePromptFilter(data.prompt_info);
+            } else {
+                console.error('Failed to load matrix data:', data.error);
+                document.getElementById('performanceMatrix').innerHTML = 
+                    '<div class="alert alert-warning">Failed to load detailed results: ' + data.error + '</div>';
+            }
+        } catch (error) {
+            console.error('Error loading matrix:', error);
+            document.getElementById('performanceMatrix').innerHTML = 
+                '<div class="alert alert-danger">Error loading detailed results. Please try again.</div>';
+        }
+    }
+
+    function displayPerformanceMatrix(data) {
+        const matrixContainer = document.getElementById('performanceMatrix');
+        const showOnlySecurityPrompts = document.getElementById('showOnlySecurityPrompts').checked;
+        const viewMode = document.getElementById('matrixViewMode').value;
+        
+        // Filter prompts based on security injection checkbox
+        const promptsToShow = Object.keys(data.prompt_info).filter(hash => {
+            const promptInfo = data.prompt_info[hash];
+            return !showOnlySecurityPrompts || promptInfo.is_security_injection;
+        });
+        
+        if (promptsToShow.length === 0) {
+            matrixContainer.innerHTML = '<div class="alert alert-info">No prompts match the current filter criteria.</div>';
+            return;
+        }
+        
+        // Group models by provider for better organization
+        const modelsByProvider = {};
+        const sortedModels = [...data.models].sort((a, b) => {
+            // Extract provider and model name for sorting
+            const providerA = a.split('_')[0];
+            const providerB = b.split('_')[0];
+            if (providerA !== providerB) {
+                return providerA.localeCompare(providerB);
+            }
+            return a.localeCompare(b);
+        });
+        
+        // Group models by provider
+        sortedModels.forEach(model => {
+            const provider = model.split('_')[0];
+            if (!modelsByProvider[provider]) {
+                modelsByProvider[provider] = [];
+            }
+            modelsByProvider[provider].push(model);
+        });
+        
+        // Create matrix HTML with grouped headers
+        let html = `
+            <table class="table table-bordered performance-matrix">
+                <thead>
+                    <tr>
+                        <th class="prompt-header" rowspan="2">Prompt</th>`;
+                        
+        // Add provider group headers
+        Object.keys(modelsByProvider).forEach(provider => {
+            const modelCount = modelsByProvider[provider].length;
+            html += `<th class="provider-header text-center" colspan="${modelCount}" style="background: var(--color-background-soft); font-weight: bold;">
+                        ${provider.charAt(0).toUpperCase() + provider.slice(1)}
+                     </th>`;
+        });
+        html += '</tr><tr>';
+        
+        // Add individual model headers
+        sortedModels.forEach(model => {
+            const modelName = model.split('_').slice(1).join(' ') || model;
+            html += `<th title="${model}" class="model-header small">${modelName}</th>`;
+        });
+        html += '</tr></thead><tbody>';
+        
+        // Calculate model performance rankings for performance indicators
+        const modelPerformanceScores = {};
+        sortedModels.forEach(model => {
+            let totalSuccess = 0;
+            let totalValid = 0;
+            
+            promptsToShow.forEach(promptHash => {
+                const cellData = data.results_matrix[promptHash] && data.results_matrix[promptHash][model];
+                if (cellData && cellData.total_evaluations > 0) {
+                    const validEvaluations = cellData.total_evaluations - (cellData.system_failures || 0);
+                    if (validEvaluations > 0) {
+                        totalSuccess += cellData.successful_evaluations || 0;
+                        totalValid += validEvaluations;
+                    }
+                }
+            });
+            
+            modelPerformanceScores[model] = totalValid > 0 ? (totalSuccess / totalValid) : 0;
+        });
+        
+        // Find best and worst performing models
+        const sortedPerformance = Object.entries(modelPerformanceScores)
+            .filter(([model, score]) => score > 0)
+            .sort((a, b) => b[1] - a[1]);
+        
+        const bestModel = sortedPerformance.length > 0 ? sortedPerformance[0][0] : null;
+        const worstModel = sortedPerformance.length > 0 ? sortedPerformance[sortedPerformance.length - 1][0] : null;
+        
+        // Add rows for each prompt
+        promptsToShow.forEach(promptHash => {
+            const promptInfo = data.prompt_info[promptHash];
+            const rowClass = promptInfo.is_security_injection ? 'security-injection-row' : '';
+            
+            html += `<tr class="${rowClass}">`;
+            html += `<td class="prompt-header" title="${promptInfo.text}">
+                        ${promptInfo.is_security_injection ? '🚨 ' : ''}${promptInfo.preview}
+                     </td>`;
+            
+            // Add cells for each model (using sorted order)
+            sortedModels.forEach(model => {
+                const cellData = data.results_matrix[promptHash] && data.results_matrix[promptHash][model];
+                let cellContent = '';
+                let cellClass = 'matrix-cell no-data';
+                
+                if (cellData && cellData.total_evaluations > 0) {
+                    // Calculate valid evaluations excluding system failures
+                    const validEvaluations = cellData.total_evaluations - (cellData.system_failures || 0);
+                    const successRate = validEvaluations > 0 ? (cellData.successful_evaluations / validEvaluations) * 100 : 0;
+                    
+                    if (viewMode === 'success_rate') {
+                        let displayContent = `${successRate.toFixed(1)}%`;
+                        // Show system failures indicator if any exist
+                        if (cellData.system_failures > 0) {
+                            displayContent += ` <small class="text-warning">⚠️${cellData.system_failures}</small>`;
+                        }
+                        cellContent = displayContent;
+                    } else if (viewMode === 'total_count') {
+                        // Show breakdown: successful/valid (with system failures if any)
+                        let displayContent = `${cellData.successful_evaluations}/${validEvaluations}`;
+                        if (cellData.system_failures > 0) {
+                            displayContent += ` <small class="text-warning">(⚠️${cellData.system_failures})</small>`;
+                        }
+                        cellContent = displayContent;
+                    } else { // pass_fail
+                        let displayContent = successRate >= 80 ? 'PASS' : successRate <= 20 ? 'FAIL' : 'PARTIAL';
+                        if (cellData.system_failures > 0) {
+                            displayContent += ` <small class="text-warning">⚠️</small>`;
+                        }
+                        cellContent = displayContent;
+                    }
+                    
+                    if (successRate >= 80) {
+                        cellClass = 'matrix-cell success';
+                    } else if (successRate <= 20) {
+                        cellClass = 'matrix-cell failure';
+                    } else {
+                        cellClass = 'matrix-cell partial';
+                    }
+                    
+                    // Add performance indicators for best/worst models
+                    if (model === bestModel && sortedPerformance.length > 1) {
+                        cellClass += ' best-performer';
+                    } else if (model === worstModel && sortedPerformance.length > 1) {
+                        cellClass += ' worst-performer';
+                    }
+                } else {
+                    cellContent = '—';
+                }
+                
+                html += `<td class="${cellClass}" onclick="showCellDetails('${promptHash}', '${model}')">${cellContent}</td>`;
+            });
+            
+            html += '</tr>';
+        });
+        
+        html += '</tbody></table>';
+        
+        // Add model performance summary
+        if (sortedPerformance.length > 0) {
+            html += `<div class="mt-3">
+                        <h6>Model Performance Summary</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="alert alert-success">
+                                    <strong>🏆 Best Performer:</strong> ${bestModel.replace('_', ' ')}<br>
+                                    <small>Success Rate: ${(modelPerformanceScores[bestModel] * 100).toFixed(1)}%</small>
+                                </div>
+                            </div>`;
+            
+            if (sortedPerformance.length > 1) {
+                html += `<div class="col-md-6">
+                            <div class="alert alert-warning">
+                                <strong>⚠️ Needs Improvement:</strong> ${worstModel.replace('_', ' ')}<br>
+                                <small>Success Rate: ${(modelPerformanceScores[worstModel] * 100).toFixed(1)}%</small>
+                            </div>
+                        </div>`;
+            }
+            
+            html += `</div></div>`;
+        }
+        
+        html += `<div class="mt-2 text-muted small">
+                    🚨 = Security injection prompt | ⚠️ = System failures (excluded from success rate) | 🏆 = Best performer | Click on cells for detailed information
+                 </div>`;
+        
+        matrixContainer.innerHTML = html;
+    }
+
+    function populatePromptFilter(promptInfo) {
+        const filterSelect = document.getElementById('filterPrompt');
+        filterSelect.innerHTML = '<option value="">All Prompts</option>';
+        
+        Object.keys(promptInfo).forEach(hash => {
+            const prompt = promptInfo[hash];
+            const prefix = prompt.is_security_injection ? '🚨 ' : '';
+            filterSelect.innerHTML += `<option value="${hash}">${prefix}${prompt.preview}</option>`;
+        });
+    }
+
+    function showCellDetails(promptHash, model) {
+        // This could show detailed information about this specific prompt-model combination
+        console.log(`Details for prompt ${promptHash} and model ${model}`);
+    }
+
+    // Load available models for the selected provider
+    async function loadAvailableModels() {
+        try {
+            const response = await fetch('/api/models');
+            const data = await response.json();
+            
+            if (data.success && data.models) {
+                const selectedProvider = document.getElementById('judgeProvider').value;
+                const modelSelect = document.getElementById('judgeModel');
+                
+                // Clear existing options
+                modelSelect.innerHTML = '';
+                
+                // Get models for the selected provider
+                const providerModels = data.models[selectedProvider] || [];
+                
+                // Filter to only show the models we support for security evaluation
+                const supportedModels = {
+                    'openai': ['gpt-4', 'gpt-4o', 'gpt-4o-mini', 'gpt-3.5-turbo', 'gpt-4-turbo'],
+                    'anthropic': ['claude-3-5-sonnet-20241022', 'claude-3-5-sonnet-20240620', 'claude-3-5-haiku-20241022', 'claude-3-opus-20240229']
+                };
+                
+                const modelsToShow = supportedModels[selectedProvider] || providerModels;
+                
+                if (modelsToShow.length > 0) {
+                    modelsToShow.forEach(modelId => {
+                        // Only add if the model exists in the provider's available models or if it's in our supported list
+                        if (providerModels.includes(modelId) || supportedModels[selectedProvider]?.includes(modelId)) {
+                            const option = document.createElement('option');
+                            option.value = modelId;
+                            option.textContent = modelId;
+                            modelSelect.appendChild(option);
+                        }
+                    });
+                } else {
+                    // Fallback to default models if no models available
+                    const fallbackModels = supportedModels[selectedProvider] || ['gpt-4'];
+                    fallbackModels.forEach(modelId => {
+                        const option = document.createElement('option');
+                        option.value = modelId;
+                        option.textContent = modelId;
+                        modelSelect.appendChild(option);
+                    });
+                }
+            } else {
+                console.error('Failed to load models:', data.error);
+            }
+        } catch (error) {
+            console.error('Error loading models:', error);
+        }
+    }
+
+    // Event listeners for matrix controls
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('showOnlySecurityPrompts').addEventListener('change', function() {
+            if (selectedRun) loadAndDisplayMatrix();
+        });
+        
+        document.getElementById('matrixViewMode').addEventListener('change', function() {
+            if (selectedRun) loadAndDisplayMatrix();
+        });
+    });
+    </script>
+{% endblock %}

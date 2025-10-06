@@ -1,0 +1,769 @@
+{% extends "base.html" %}
+
+{% block title %} Results - Prompt Injection for Good{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        background: white;
+        border: none;
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-brand-sm);
+        text-align: center;
+        padding: 1.25rem;
+        height: 100%;
+        transition: var(--transition-base);
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-brand);
+    }
+    
+    .stats-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--brand-indigo);
+        margin-bottom: 0.25rem;
+    }
+    
+    .stats-label {
+        color: var(--brand-slate);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Controls and Filters -->
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4><svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" /></svg> Evaluation Results</h4>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center mb-4">
+                    <div class="col-md-8">
+                        <p class="mb-0">View the results of individual uploaded documents on this page. If you want to evaluate them automatically for security compliance, you can proceed to the next step: Automatic Document Evaluation.</p>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stats-card">
+                            <div class="stats-number" id="totalResults">0</div>
+                            <div class="stats-label">Total Results</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row align-items-end">
+                    <div class="col-md-3">
+                        <label for="runNumberFilter" class="form-label">Run Number</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="runNumberFilter" min="1" placeholder="Enter run number">
+                            <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" id="runDropdownToggle">
+                                <svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm-.375 5.25h.007v.008H3.75v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" /></svg>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" id="runDropdownMenu">
+                                <li><h6 class="dropdown-header">Available Runs</h6></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-muted" href="#">Loading runs...</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="providerFilter" class="form-label">Provider</label>
+                        <select class="form-select" id="providerFilter">
+                            <option value="">All Providers</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="statusFilter" class="form-label">Status</label>
+                        <select class="form-select" id="statusFilter">
+                            <option value="">All Status</option>
+                            <option value="success">Success</option>
+                            <option value="error">Error</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="promptFilter" class="form-label">Prompt</label>
+                        <select class="form-select" id="promptFilter">
+                            <option value="">All Prompts</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="exportButtons" class="form-label">Export Results</label>
+                        <div class="export-buttons-container">
+                            <button type="button" class="btn export-btn export-btn-csv" id="exportCsv" disabled>
+                                <div class="export-btn-content">
+                                    <svg class="heroicon-sm" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>
+                                    <span>CSV</span>
+                                </div>
+                            </button>
+                            <button type="button" class="btn export-btn export-btn-json" id="exportJson" disabled>
+                                <div class="export-btn-content">
+                                    <svg class="heroicon-sm" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5" /></svg>
+                                    <span>JSON</span>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Row -->
+<div class="row" id="statisticsRow" style="display: none;">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-primary" id="totalTasks">0</h5>
+                <p class="card-text">Total Tasks</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-success" id="successfulTasks">0</h5>
+                <p class="card-text">Successful</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-danger" id="failedTasks">0</h5>
+                <p class="card-text">Failed</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-info" id="avgResponseTime">0s</h5>
+                <p class="card-text">Avg Response Time</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Results Table -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Evaluation Results</h5>
+                <div id="resultsCount" class="text-muted"></div>
+            </div>
+            <div class="card-body">
+                <div id="loadingIndicator" class="text-center py-4" style="display: none;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading results...</p>
+                </div>
+                
+                <div id="noResults" style="display: none;">
+                    <div class="text-center py-5 text-muted">
+                        <svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>
+                        <h5>Select a Run to View Results</h5>
+                        <p>Use the dropdown above to select from available runs, or enter a run number and click Load Results.</p>
+                    </div>
+                </div>
+                
+                <div class="table-responsive" id="resultsTableContainer" style="display: none;">
+                    <table class="table table-striped table-hover results-table">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>File</th>
+                                <th>Prompt</th>
+                                <th>Provider</th>
+                                <th>Model</th>
+                                <th>Status</th>
+                                <th>Response Time</th>
+                                <th>Tokens (In/Out)</th>
+                                <th>Output</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Result Detail Modal -->
+<div class="modal fade" id="resultDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Result Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Evaluation Info</h6>
+                        <table class="table table-sm">
+                            <tr><td><strong>File:</strong></td><td id="detailFileName"></td></tr>
+                            <tr><td><strong>Provider:</strong></td><td id="detailProvider"></td></tr>
+                            <tr><td><strong>Model:</strong></td><td id="detailModel"></td></tr>
+                            <tr><td><strong>Status:</strong></td><td id="detailStatus"></td></tr>
+                            <tr><td><strong>Response Time:</strong></td><td id="detailResponseTime"></td></tr>
+                            <tr><td><strong>Input Tokens:</strong></td><td id="detailInputTokens"></td></tr>
+                            <tr><td><strong>Output Tokens:</strong></td><td id="detailOutputTokens"></td></tr>
+                            <tr><td><strong>Timestamp:</strong></td><td id="detailTimestamp"></td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Input Prompt</h6>
+                        <div class="border rounded p-2 bg-light small" id="detailPrompt" style="max-height: 200px; overflow-y: auto;"></div>
+                        
+                        <h6 class="mt-3">Prompt Description</h6>
+                        <div class="border rounded p-2 bg-light small" id="detailPromptDescription" style="max-height: 100px; overflow-y: auto;"></div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6>Output Text</h6>
+                        <div class="border rounded p-3 bg-light" id="detailOutput" style="max-height: 300px; overflow-y: auto; white-space: pre-wrap;"></div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3" id="errorSection" style="display: none;">
+                    <div class="col-12">
+                        <h6 class="text-danger">Error Message</h6>
+                        <div class="border rounded p-3 bg-danger-subtle" id="detailError"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="copyOutput">
+                    <svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" /></svg> Copy Output
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let currentResults = [];
+    let currentRunNumber = null;
+    let currentStatistics = null;
+    let availableRuns = [];
+    
+    // Initialize page
+    document.addEventListener('providersLoaded', function(event) {
+        populateProviderFilter();
+        loadAvailableRuns();
+    });
+    
+    function checkUrlParameters() {
+        // Check for run parameter in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const runNumber = urlParams.get('run');
+        
+        if (runNumber) {
+            // Set the run number in the filter
+            document.getElementById('runNumberFilter').value = runNumber;
+            // Automatically load results
+            loadResults();
+        } else if (availableRuns.length > 0) {
+            // No URL parameter, auto-load the latest run
+            const latestRun = availableRuns[0]; // Already sorted by run_number desc
+            document.getElementById('runNumberFilter').value = latestRun.run_number;
+            loadResults();
+            
+            // Auto-loaded latest run - no notification needed, UI shows which run is loaded
+        } else {
+            // No runs available, show the selection interface
+            showNoResultsInterface();
+        }
+    }
+    
+    function showNoResultsInterface() {
+        document.getElementById('noResults').style.display = 'block';
+        document.getElementById('resultsTableContainer').style.display = 'none';
+        document.getElementById('statisticsRow').style.display = 'none';
+    }
+    
+    async function loadAvailableRuns() {
+        try {
+            const response = await fetch('/api/evaluation/runs');
+            const result = await response.json();
+            
+            if (result.success) {
+                availableRuns = result.runs || [];
+                populateRunDropdown();
+                checkUrlParameters(); // Check URL parameters after runs are loaded
+            }
+        } catch (error) {
+            console.error('Failed to load evaluation runs:', error);
+        }
+    }
+    
+    function populateRunDropdown(searchTerm = '', showAll = false) {
+        const dropdownMenu = document.getElementById('runDropdownMenu');
+        
+        if (availableRuns.length === 0) {
+            dropdownMenu.innerHTML = `
+                <li><h6 class="dropdown-header">Available Runs</h6></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><span class="dropdown-item-text text-muted">No runs found</span></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="#" onclick="loadAvailableRuns()">
+                    <svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" /></svg> Refresh
+                </a></li>
+            `;
+            return;
+        }
+        
+        const currentRunNumber = parseInt(document.getElementById('runNumberFilter').value) || null;
+        
+        // Filter runs based on search term
+        let filteredRuns = availableRuns;
+        if (searchTerm) {
+            filteredRuns = availableRuns.filter(run => 
+                run.run_number.toString().includes(searchTerm) ||
+                (run.providers && run.providers.some(p => p.toLowerCase().includes(searchTerm.toLowerCase())))
+            );
+        }
+        
+        // Sort by run number descending (most recent first) and limit initial display
+        filteredRuns.sort((a, b) => b.run_number - a.run_number);
+        const displayRuns = showAll ? filteredRuns : filteredRuns.slice(0, 20);
+        const hasMore = filteredRuns.length > 20 && !showAll;
+        
+        const searchInput = `
+            <li class="px-3 py-2">
+                <input type="text" class="form-control form-control-sm" 
+                       placeholder="Search runs..." 
+                       value="${searchTerm}"
+                       onkeyup="populateRunDropdown(this.value)" />
+            </li>
+            <li><hr class="dropdown-divider"></li>
+        `;
+        
+        const recentRuns = displayRuns.map(run => {
+            const isSelected = run.run_number === currentRunNumber;
+            const successRate = run.total_evaluations > 0 
+                ? ((run.successful_evaluations / run.total_evaluations) * 100).toFixed(0)
+                : 0;
+            
+            const lastRun = run.latest_timestamp 
+                ? new Date(run.latest_timestamp + 'Z').toLocaleDateString()
+                : 'Unknown';
+            
+            return `
+                <li>
+                    <a class="dropdown-item ${isSelected ? 'active' : ''}" href="#" 
+                       onclick="selectRunNumber(${run.run_number})">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>Run #${run.run_number}</strong>
+                                <br><small class="text-muted">${run.total_evaluations} evaluations (${successRate}% success)</small>
+                                <br><small class="text-muted">${lastRun}</small>
+                            </div>
+                            <div class="text-end">
+                                <small class="text-muted">${run.providers ? run.providers.join(', ') : 'N/A'}</small>
+                            </div>
+                        </div>
+                    </a>
+                </li>
+            `;
+        }).join('');
+        
+        const showMoreButton = hasMore ? `
+            <li><a class="dropdown-item text-center text-primary" href="#" onclick="populateRunDropdown('${searchTerm}', true)">
+                <svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg> Show ${filteredRuns.length - 20} more runs
+            </a></li>
+        ` : '';
+        
+        dropdownMenu.innerHTML = `
+            <li><h6 class="dropdown-header">Available Runs (${filteredRuns.length}${filteredRuns.length !== availableRuns.length ? ' filtered' : ''})</h6></li>
+            ${searchInput}
+            ${recentRuns}
+            ${showMoreButton}
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#" onclick="loadAvailableRuns()">
+                <svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" /></svg> Refresh Run Data
+            </a></li>
+        `;
+    }
+    
+    function selectRunNumber(runNumber) {
+        document.getElementById('runNumberFilter').value = runNumber;
+        loadResults(); // Auto-load results when selecting from dropdown
+    }
+    
+    // Removed populateAvailableRunsList function since sidebar was removed
+    
+    function populateProviderFilter() {
+        const select = document.getElementById('providerFilter');
+        const options = availableProviders.map(provider => 
+            `<option value="${provider}">${provider.charAt(0).toUpperCase() + provider.slice(1)}</option>`
+        ).join('');
+        select.innerHTML = '<option value="">All Providers</option>' + options;
+    }
+    
+    async function populatePromptFilter() {
+        try {
+            const response = await fetch('/api/prompts');
+            const data = await response.json();
+            
+            if (data.success) {
+                const select = document.getElementById('promptFilter');
+                const options = data.prompts.map(prompt => {
+                    const displayText = prompt.text.length > 40 
+                        ? prompt.text.substring(0, 40) + '...' 
+                        : prompt.text;
+                    return `<option value="${prompt.hash}">${displayText} (${prompt.usage_count})</option>`;
+                }).join('');
+                select.innerHTML = '<option value="">All Prompts</option>' + options;
+            }
+        } catch (error) {
+            console.error('Error loading prompt filter:', error);
+        }
+    }
+    
+    // Database debug function
+    async function debugDatabase() {
+        try {
+            const response = await fetch('/api/debug/database');
+            const data = await response.json();
+            
+            if (data.success) {
+                const debugInfo = data.debug_info;
+                
+                let message = `🔍 Database Debug Information\n\n`;
+                message += `📊 Total Evaluations: ${debugInfo.total_evaluations}\n`;
+                message += `📋 Total Runs: ${debugInfo.total_runs}\n`;
+                message += `📏 Run Range: ${debugInfo.run_range}\n\n`;
+                
+                if (debugInfo.high_numbered_runs && debugInfo.high_numbered_runs.length > 0) {
+                    message += `🔢 High-numbered runs found: ${debugInfo.high_numbered_runs.slice(0, 10).join(', ')}\n\n`;
+                }
+                
+                if (debugInfo.recent_runs && debugInfo.recent_runs.length > 0) {
+                    message += `📅 Most Recent Runs:\n`;
+                    debugInfo.recent_runs.slice(0, 10).forEach(run => {
+                        message += `  • Run #${run.run_number}: ${run.evaluations_count} evaluations\n`;
+                    });
+                    message += `\n`;
+                }
+                
+                if (debugInfo.missing_sequential_runs && debugInfo.missing_sequential_runs.length > 0) {
+                    message += `⚠️ Missing sequential runs: ${debugInfo.total_missing_runs} total\n`;
+                    message += `First 10 missing: ${debugInfo.missing_sequential_runs.slice(0, 10).join(', ')}\n\n`;
+                }
+                
+                if (debugInfo.estimated_db_size_mb) {
+                    message += `💾 Database size: ${debugInfo.estimated_db_size_mb.toFixed(2)} MB\n`;
+                }
+                
+                message += `\n🔗 Run numbers: ${debugInfo.all_run_numbers ? debugInfo.all_run_numbers.slice(0, 20).join(', ') + (debugInfo.all_run_numbers.length > 20 ? '...' : '') : 'None'}`;
+                
+                alert(message);
+            } else {
+                alert(`Debug failed: ${data.error}`);
+            }
+        } catch (error) {
+            console.error('Debug error:', error);
+            alert(`Debug request failed: ${error.message}`);
+        }
+    }
+
+    // Event listeners
+    document.getElementById('loadResults').addEventListener('click', loadResults);
+    document.getElementById('exportCsv').addEventListener('click', () => exportResults('csv'));
+    document.getElementById('exportJson').addEventListener('click', () => exportResults('json'));
+    // document.getElementById('startSecurityEval').addEventListener('click', startSecurityEvaluation);
+    // document.getElementById('debugDatabase').addEventListener('click', debugDatabase);
+    document.getElementById('copyOutput').addEventListener('click', copyOutputToClipboard);
+    
+    // Allow loading results with Enter key
+    document.getElementById('runNumberFilter').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            loadResults();
+        }
+    });
+    
+    async function loadResults() {
+        const runNumber = document.getElementById('runNumberFilter').value;
+        
+        if (!runNumber) {
+            showAlert('Please enter a run number', 'warning');
+            return;
+        }
+        
+        showLoadingIndicator(true);
+        
+        try {
+            const response = await fetch(`/api/results/${runNumber}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                currentResults = data.results;
+                currentRunNumber = runNumber;
+                currentStatistics = data.statistics;
+                
+                displayResults(data.results);
+                displayStatistics(data.statistics);
+                
+                document.getElementById('exportCsv').disabled = false;
+                document.getElementById('exportJson').disabled = false;
+                // document.getElementById('startSecurityEval').disabled = false;
+                
+                // Results loading successfully is shown by the table appearing - no notification needed
+            } else {
+                showAlert('Failed to load results: ' + data.error, 'error');
+                clearResults();
+            }
+        } catch (error) {
+            showAlert('Error loading results: ' + error.message, 'error');
+            clearResults();
+        } finally {
+            showLoadingIndicator(false);
+        }
+    }
+    
+    function showLoadingIndicator(show) {
+        document.getElementById('loadingIndicator').style.display = show ? 'block' : 'none';
+        document.getElementById('noResults').style.display = show ? 'none' : (currentResults.length === 0 ? 'block' : 'none');
+        document.getElementById('resultsTableContainer').style.display = show ? 'none' : (currentResults.length > 0 ? 'block' : 'none');
+    }
+    
+    function displayStatistics(stats) {
+        if (!stats) return;
+        
+        document.getElementById('totalTasks').textContent = stats.total_evaluations || 0;
+        document.getElementById('totalResults').textContent = stats.total_evaluations || 0;
+        document.getElementById('successfulTasks').textContent = stats.successful_evaluations || 0;
+        document.getElementById('failedTasks').textContent = stats.failed_evaluations || 0;
+        document.getElementById('avgResponseTime').textContent = formatDuration(stats.avg_response_time || 0);
+        
+        document.getElementById('statisticsRow').style.display = 'flex';
+    }
+    
+    function displayResults(results) {
+        const tbody = document.getElementById('resultsTableBody');
+        const providerFilter = document.getElementById('providerFilter').value;
+        const statusFilter = document.getElementById('statusFilter').value;
+        const promptFilter = document.getElementById('promptFilter').value;
+        
+        // Apply filters
+        let filteredResults = results;
+        if (providerFilter) {
+            filteredResults = filteredResults.filter(r => r.llm_provider === providerFilter);
+        }
+        if (statusFilter) {
+            filteredResults = filteredResults.filter(r => r.status === statusFilter);
+        }
+        if (promptFilter) {
+            filteredResults = filteredResults.filter(r => r.prompt_hash === promptFilter);
+        }
+        
+        // Update count
+        document.getElementById('resultsCount').textContent = 
+            `${filteredResults.length} of ${results.length} results`;
+        
+        if (filteredResults.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">No results match the current filters</td></tr>';
+            return;
+        }
+        
+        const html = filteredResults.map(result => {
+            const statusBadge = result.status === 'success' 
+                ? '<span class="badge bg-success">Success</span>'
+                : '<span class="badge bg-danger">Error</span>';
+            
+            const timestamp = result.timestamp 
+                ? new Date(result.timestamp).toLocaleString()
+                : 'N/A';
+            
+            const outputPreview = result.output_text 
+                ? (result.output_text.length > 100 
+                    ? result.output_text.substring(0, 100) + '...'
+                    : result.output_text)
+                : (result.error_message || 'No output');
+            
+            const tokens = `${result.input_token_usage || 0} / ${result.output_token_usage || 0}`;
+            
+            // Display prompt preview
+            const promptPreview = result.prompt_text 
+                ? (result.prompt_text.length > 50 
+                    ? result.prompt_text.substring(0, 50) + '...'
+                    : result.prompt_text)
+                : 'N/A';
+            
+            return `
+                <tr>
+                    <td class="small">${timestamp}</td>
+                    <td><strong>${result.file_name}</strong></td>
+                    <td class="small" title="${result.prompt_text || 'No prompt'}">${promptPreview}</td>
+                    <td><span class="provider-badge">${result.llm_provider}</span></td>
+                    <td class="small">${result.model_version}</td>
+                    <td>${statusBadge}</td>
+                    <td>${formatDuration(result.response_time_seconds || 0)}</td>
+                    <td class="small">${tokens}</td>
+                    <td class="output-text small">${outputPreview}</td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="showResultDetail(${result.id})">
+                            <svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+        
+        tbody.innerHTML = html;
+    }
+    
+    function showResultDetail(resultId) {
+        const result = currentResults.find(r => r.id === resultId);
+        if (!result) return;
+        
+        // Populate modal
+        document.getElementById('detailFileName').textContent = result.file_name;
+        document.getElementById('detailProvider').textContent = result.llm_provider;
+        document.getElementById('detailModel').textContent = result.model_version;
+        document.getElementById('detailStatus').innerHTML = 
+            result.status === 'success' 
+                ? '<span class="badge bg-success">Success</span>'
+                : '<span class="badge bg-danger">Error</span>';
+        document.getElementById('detailResponseTime').textContent = formatDuration(result.response_time_seconds || 0);
+        document.getElementById('detailInputTokens').textContent = result.input_token_usage || 'N/A';
+        document.getElementById('detailOutputTokens').textContent = result.output_token_usage || 'N/A';
+        document.getElementById('detailTimestamp').textContent = 
+            result.timestamp ? new Date(result.timestamp).toLocaleString() : 'N/A';
+        
+        document.getElementById('detailPrompt').textContent = result.input_prompt_text || 'No prompt';
+        document.getElementById('detailPromptDescription').textContent = result.manual_prompt_description || 'No description';
+        document.getElementById('detailOutput').textContent = result.output_text || 'No output';
+        
+        // Handle error section
+        const errorSection = document.getElementById('errorSection');
+        if (result.status === 'error' && result.error_message) {
+            document.getElementById('detailError').textContent = result.error_message;
+            errorSection.style.display = 'block';
+        } else {
+            errorSection.style.display = 'none';
+        }
+        
+        // Store current result for copying
+        window.currentDetailResult = result;
+        
+        new bootstrap.Modal(document.getElementById('resultDetailModal')).show();
+    }
+    
+    function copyOutputToClipboard() {
+        if (window.currentDetailResult && window.currentDetailResult.output_text) {
+            navigator.clipboard.writeText(window.currentDetailResult.output_text).then(() => {
+                showAlert('Output copied to clipboard', 'success');
+            }).catch(err => {
+                showAlert('Failed to copy output: ' + err.message, 'error');
+            });
+        }
+    }
+    
+    async function exportResults(format) {
+        if (!currentRunNumber) {
+            showAlert('No results loaded to export', 'warning');
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/results/${currentRunNumber}/export/${format}`);
+            
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `results_run_${currentRunNumber}.${format}`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                showAlert(`Results exported as ${format.toUpperCase()}`, 'success');
+            } else {
+                const data = await response.json();
+                showAlert('Export failed: ' + (data.error || 'Unknown error'), 'error');
+            }
+        } catch (error) {
+            showAlert('Export error: ' + error.message, 'error');
+        }
+    }
+    
+    function clearResults() {
+        currentResults = [];
+        currentRunNumber = null;
+        currentStatistics = null;
+        
+        document.getElementById('resultsTableBody').innerHTML = '';
+        document.getElementById('resultsTableContainer').style.display = 'none';
+        document.getElementById('statisticsRow').style.display = 'none';
+        document.getElementById('noResults').style.display = 'block';
+        document.getElementById('resultsCount').textContent = '';
+        
+        document.getElementById('exportCsv').disabled = true;
+        document.getElementById('exportJson').disabled = true;
+        // document.getElementById('startSecurityEval').disabled = true;
+    }
+    
+    function startSecurityEvaluation() {
+        if (!currentRunNumber) {
+            showAlert('No run selected for security evaluation', 'warning');
+            return;
+        }
+        
+        // Redirect to security evaluation page with the current run number
+        const securityUrl = `/security-bulk?run=${currentRunNumber}`;
+        window.open(securityUrl, '_blank');
+        
+        // Show success message
+        showAlert(`Opening security evaluation for Run #${currentRunNumber}`, 'info');
+    }
+    
+    // Filter change listeners
+    document.getElementById('providerFilter').addEventListener('change', function() {
+        if (currentResults.length > 0) {
+            displayResults(currentResults);
+        }
+    });
+    
+    document.getElementById('statusFilter').addEventListener('change', function() {
+        if (currentResults.length > 0) {
+            displayResults(currentResults);
+        }
+    });
+    
+    document.getElementById('promptFilter').addEventListener('change', function() {
+        if (currentResults.length > 0) {
+            displayResults(currentResults);
+        }
+    });
+    
+    // Initialize prompt filter on page load
+    populatePromptFilter();
+    
+    // Auto-load if run number is in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const runParam = urlParams.get('run_number') || urlParams.get('run');
+    if (runParam) {
+        document.getElementById('runNumberFilter').value = runParam;
+        loadResults();
+    }
+</script>
+{% endblock %}

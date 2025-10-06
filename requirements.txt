@@ -1,0 +1,31 @@
+# Core dependencies
+sqlalchemy>=2.0.0
+click>=8.0.0
+python-dotenv>=1.0.0
+tqdm>=4.65.0
+aiohttp>=3.8.0
+
+# LLM Provider SDKs
+openai>=1.3.0
+anthropic>=0.8.0
+requests>=2.31.0  # For DeepSeek and other HTTP-based providers
+google-generativeai>=0.3.0  # For Google Gemini models
+
+# Data processing
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Advanced evaluation features (optional)
+sentence-transformers>=2.0.0  # For semantic similarity scoring
+scikit-learn>=1.3.0          # For advanced analytics
+scipy>=1.10.0                # For statistical analysis
+
+# Web UI dependencies
+flask>=2.3.0                 # Web framework
+flask-cors>=4.0.0            # CORS support
+werkzeug>=2.3.0              # WSGI utilities
+
+# Document generation dependencies
+python-docx>=0.8.11          # Word document generation
+docx2pdf>=0.1.8              # PDF conversion from DOCX
+PyPDF2>=3.0.1               # PDF processing

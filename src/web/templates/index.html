@@ -1,0 +1,1530 @@
+{% extends "base.html" %}
+
+{% block title %}Bulk Submission - Prompt Injection for Good{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        background: white;
+        border: none;
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-brand-sm);
+        text-align: center;
+        padding: 1.25rem;
+        height: 100%;
+        transition: var(--transition-base);
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-brand);
+    }
+    
+    .stats-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--brand-indigo);
+        margin-bottom: 0.25rem;
+    }
+    
+    .stats-label {
+        color: var(--brand-slate);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Configuration Form -->
+    <div class="col-lg-8">
+        <div class="card shadow-brand">
+            <div class="card-header">
+                <h4><svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12a7.5 7.5 0 0 0 15 0m-15 0a7.5 7.5 0 1 1 15 0m-15 0H3m16.5 0H21m-1.5 0H12m-8.457 3.077 1.41-.513m14.095-5.13 1.41-.513M5.106 17.785l1.15-.964m11.49-9.642 1.149-.964M7.501 19.795l.75-1.3m7.5-12.99.75-1.3m-6.063 16.658.26-1.477m2.605-14.772.26-1.477m0 17.726-.26-1.477M10.698 4.614l-.26-1.477M16.5 19.794l-.75-1.299M7.5 4.205 12 12m6.894 5.785-1.149-.964M6.256 7.178l-1.15-.964m15.352 8.864-1.41-.513M4.954 9.435l-1.41-.514M12.002 12l-3.75 6.495" /></svg> Evaluation Configuration Builder</h4>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center mb-4">
+                    <div class="col-md-8">
+                        <p class="mb-0">Upload the generated documents to supported LLM models for evaluation. Please ensure you have added the required API keys according to the README instructions before proceeding.</p>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stats-card">
+                            <div class="stats-number" id="fileCount">0</div>
+                            <div class="stats-label">Files Selected</div>
+                        </div>
+                    </div>
+                </div>
+                <form id="configForm">
+                    <!-- Basic Settings -->
+                    <div class="form-section">
+                        <h5 class="mb-3">Basic Settings</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="runNumber" class="form-label">Run Number</label>
+                                <div class="input-group">
+                                <input type="number" class="form-control" id="runNumber" min="1" value="1" required>
+                                    <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" id="runDropdownToggle">
+                                        <svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm-.375 5.25h.007v.008H3.75v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" /></svg>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end" id="runDropdownMenu">
+                                        <li><h6 class="dropdown-header">Available Runs</h6></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item text-muted" href="#">Loading runs...</a></li>
+                                    </ul>
+                                </div>
+                                <div class="form-text" id="runNumberHelpText">Unique identifier for this evaluation run</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="maxConcurrent" class="form-label">Max Concurrent Tasks</label>
+                                <input type="number" class="form-control" id="maxConcurrent" min="1" max="50" value="15">
+                                <div class="form-text">Number of parallel evaluations (1-50)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Provider and Model Selection -->
+                    <div class="form-section">
+                        <h5 class="mb-3">Providers & Models</h5>
+                        <div class="row">
+                            <div class="col-md-6 align-items-end">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="form-label mb-0">Select Providers</label>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="refreshProviderStatus()" title="Refresh provider status">
+                                        <svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>
+                                    </button>
+                                </div>
+                                <div id="providerSelection" class="border rounded p-3 bg-brand-soft" style="max-height: 200px; overflow-y: auto;">
+                                    <p class="text-muted">Loading providers...</p>
+                                </div>
+                                <div class="form-text">Choose which LLM providers to use. <svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg> = Configured, <svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg> = Not configured</div>
+                            </div>
+                            <div class="col-md-6 align-items-end">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="form-label mb-0">Select Models</label>
+                                    <div style="height: 40px;"></div> <!-- Spacer to match refresh button width -->
+                                </div>
+                                <div id="modelSelection" class="border rounded p-3 bg-brand-soft" style="max-height: 200px; overflow-y: auto;">
+                                    <p class="text-muted">Select providers first</p>
+                                </div>
+                                <div class="form-text">Choose specific models</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- File Upload and Management -->
+                    <div class="form-section">
+                        <h5 class="mb-3">Files & Prompts</h5>
+                        
+                        <!-- File Upload Area -->
+                        <div class="file-upload-area bg-brand-soft" id="fileUploadArea">
+                            <svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0 3 3m-3-3-3 3M6.75 19.5a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.233-2.33 3 3 0 0 1 3.758 3.848A3.752 3.752 0 0 1 18.75 19.5H6.75Z" /></svg>
+                            <h6>Drag & Drop Files Here</h6>
+                            <p class="text-muted">or click to browse</p>
+                            <input type="file" id="fileInput" multiple accept=".pdf,.docx,.doc,.txt,.md,.csv,.json,.jpg,.jpeg,.png,.gif,.webp,.bmp,.wav,.mp3,.ogg,.mp4,.mpeg,.mov,.avi,.eml" style="display: none;">
+                        </div>
+                        
+                        <!-- Uploaded Files List -->
+                        <div id="filesList" class="mt-3"></div>
+                        <!-- Default Prompt -->
+                        <div class="mt-4">
+                            <label for="defaultPrompt" class="form-label">Default Prompt</label>
+                            <div class="position-relative">
+                            <textarea class="form-control" id="defaultPrompt" rows="3" placeholder="Enter the default prompt to use for all files...">Analyze this document and provide key insights (Example)</textarea>
+                                <button class="btn btn-sm btn-outline-secondary position-absolute" type="button" id="showDefaultPromptOptions" style="top: 5px; right: 5px;" title="Choose from existing prompts">
+                                    <svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm-.375 5.25h.007v.008H3.75v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" /></svg>
+                                </button>
+                            </div>
+                            <div class="form-text">This prompt will be used for all files unless overridden individually.</div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="form-section">
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-primary btn-cta" id="runEvaluation">
+                                <svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" /></svg> Run Evaluation
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="saveConfig">
+                                <svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" /></svg> Save Config
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" id="loadConfig">
+                                <svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 0 0-1.883 2.542l.857 6a2.25 2.25 0 0 0 2.227 1.932H19.05a2.25 2.25 0 0 0 2.227-1.932l.857-6a2.25 2.25 0 0 0-1.883-2.542m-16.5 0V6A2.25 2.25 0 0 1 6 3.75h3.879a1.5 1.5 0 0 1 1.06.44l2.122 2.12a1.5 1.5 0 0 0 1.06.44H18A2.25 2.25 0 0 1 20.25 9v.776" /></svg> Load Config
+                            </button>
+                            <button type="button" class="btn btn-outline-danger" id="clearForm">
+                                <svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg> Clear All
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status and Preview -->
+    <div class="col-lg-4">
+        <!-- Run Context -->
+        <div class="card mb-3 shadow-brand">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6><svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" /></svg> Run Context</h6>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="loadEvaluationRuns()" title="Refresh run data">
+                    <svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="runContextInfo">
+                    <div class="text-muted">Loading run information...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Configuration Preview -->
+        <div class="card mb-3 shadow-brand">
+            <div class="card-header">
+                <h6><svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg> Configuration Preview</h6>
+            </div>
+            <div class="card-body">
+                <div class="accordion accordion-flush">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="configHeader">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#configCollapse">
+                                <small>Show JSON Configuration</small>
+                            </button>
+                        </h2>
+                        <div id="configCollapse" class="accordion-collapse collapse" data-bs-parent="#configAccordion">
+                            <div class="accordion-body p-2">
+                                <pre id="configPreview" class="small text-muted mb-0">Build your configuration...</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Evaluation Status -->
+        <div class="card shadow-brand">
+            <div class="card-header">
+                <h6><svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg> Evaluation Status</h6>
+            </div>
+            <div class="card-body">
+                <div id="evaluationStatus" class="text-muted">
+                    Ready to run evaluation
+                </div>
+                
+                <!-- Progress Bar -->
+                <div class="progress-container">
+                    <div class="progress mb-2">
+                        <div class="progress-bar" id="progressBar" role="progressbar" style="width: 0%"></div>
+                    </div>
+                    <div id="progressText" class="small text-muted"></div>
+                </div>
+                
+                <!-- Log Output -->
+                <div id="logOutput" class="log-output" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- File Configuration Modal -->
+<div class="modal fade" id="fileConfigModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Configure File: <span id="modalFileName"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="fileDescription" class="form-label">Injected Prompt Description</label>
+                    <div class="position-relative">
+                        <textarea class="form-control" rows="6" id="fileDescription" placeholder="Describe the prompt that was injected into this document"></textarea>   
+                    </div>
+                    <div class="form-text">Describe what prompt was injected/embedded into the document content (not the analysis prompt above). This is used to categorize the prompts in the evaluation results.</div>
+                </div>
+                <div class="mb-3">
+                    <label for="filePrompt" class="form-label">Override Default Prompt</label>
+                    <div class="position-relative">
+                        <textarea class="form-control" id="filePrompt" rows="2" placeholder="Enter your prompt or leave empty to use default prompt"></textarea>
+                        <button class="btn btn-sm btn-outline-secondary position-absolute" type="button" id="showPromptOptions" style="top: 5px; right: 5px;" title="Choose from existing prompts">
+                            <svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm-.375 5.25h.007v.008H3.75v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" /></svg>
+                        </button>
+                    </div>
+                    <div class="form-text">Leave empty to use the default prompt.</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveFileConfig">Save Configuration</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Load Config Modal -->
+<div class="modal fade" id="loadConfigModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Load Configuration</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="configFile" class="form-label">Select Configuration File</label>
+                    <input type="file" class="form-control" id="configFile" accept=".json">
+                </div>
+                <div class="text-muted small">
+                    Load a previously saved evaluation configuration from a JSON file.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="loadConfigFile">Load</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Global state
+    let uploadedFiles = [];
+    let fileConfigs = {};
+    let currentFileBeingConfigured = null;
+    let evaluationRunning = false;
+    let availableRuns = [];
+    let availablePrompts = [];
+    
+    // Initialize page
+    document.addEventListener('providersLoaded', async function(event) {
+        await populateProviderSelection();
+        await loadEvaluationRuns();
+        await loadAvailablePrompts();
+        updateConfigPreview();
+        setupPromptEventListeners();
+        setupMainEventListeners();
+    });
+    
+    // File upload handling
+    const fileUploadArea = document.getElementById('fileUploadArea');
+    const fileInput = document.getElementById('fileInput');
+    
+    fileUploadArea.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', handleFileSelect);
+    
+    // Drag and drop
+    fileUploadArea.addEventListener('dragover', handleDragOver);
+    fileUploadArea.addEventListener('dragleave', handleDragLeave);
+    fileUploadArea.addEventListener('drop', handleFileDrop);
+    
+    function handleDragOver(e) {
+        e.preventDefault();
+        fileUploadArea.classList.add('dragover');
+    }
+    
+    function handleDragLeave(e) {
+        e.preventDefault();
+        fileUploadArea.classList.remove('dragover');
+    }
+    
+    function handleFileDrop(e) {
+        e.preventDefault();
+        fileUploadArea.classList.remove('dragover');
+        const files = Array.from(e.dataTransfer.files);
+        uploadFiles(files);
+    }
+    
+    function handleFileSelect(e) {
+        const files = Array.from(e.target.files);
+        uploadFiles(files);
+    }
+    
+    async function uploadFiles(files) {
+        for (const file of files) {
+            await uploadSingleFile(file);
+        }
+    }
+    
+    async function uploadSingleFile(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        try {
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                const fileInfo = {
+                    filename: result.filename,
+                    filepath: result.filepath,
+                    originalName: file.name,
+                    size: result.size
+                };
+                
+                uploadedFiles.push(fileInfo);
+                
+                // Check if this is a generated document and pre-fill prompt info
+                await checkAndPreFillGeneratedDocument(fileInfo);
+                
+                updateFilesList();
+                updateConfigPreview();
+                showAlert(`File "${file.name}" uploaded successfully`, 'success');
+            } else {
+                showAlert(`Failed to upload "${file.name}": ${result.error}`, 'error');
+            }
+        } catch (error) {
+            showAlert(`Error uploading "${file.name}": ${error.message}`, 'error');
+        }
+    }
+    
+    async function checkAndPreFillGeneratedDocument(fileInfo) {
+        try {
+            // Check if this file is a generated document by looking it up in the database
+            const response = await fetch('/api/generated-documents');
+            const result = await response.json();
+            
+            if (result.success && result.documents) {
+                // Look for a document with matching filename
+                const matchingDoc = result.documents.find(doc => 
+                    doc.file_name === fileInfo.originalName ||
+                    doc.file_name === fileInfo.filename ||
+                    doc.file_path.includes(fileInfo.originalName)
+                );
+                
+                if (matchingDoc && matchingDoc.prompt_description) {
+                    // Pre-fill the file configuration with the injected prompt description
+                    fileConfigs[fileInfo.filename] = {
+                        prompt: '',  // Don't pre-fill analysis prompt, leave empty to use default
+                        prompt_description: matchingDoc.prompt_description
+                    };
+                    
+                    console.log(`Pre-filled prompt description for ${fileInfo.originalName}:`, matchingDoc.prompt_description);
+                }
+            }
+        } catch (error) {
+            console.error('Error checking for generated document:', error);
+            // Don't show error to user, this is optional functionality
+        }
+    }
+    
+    function updateFilesList() {
+        const filesList = document.getElementById('filesList');
+        
+        if (uploadedFiles.length === 0) {
+            filesList.innerHTML = '';
+            return;
+        }
+        
+        const html = uploadedFiles.map((file, index) => `
+            <div class="card mb-2">
+                <div class="card-body py-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${file.originalName}</strong>
+                            <span class="text-muted small">(${formatFileSize(file.size)})</span>
+                            ${fileConfigs[file.filename] ? '<svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a6.759 6.759 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>' : ''}
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="configureFile('${file.filename}', '${file.originalName}')">
+                                <svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a6.759 6.759 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeFile(${index})">
+                                <svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        
+        filesList.innerHTML = html;
+    }
+    
+    function removeFile(index) {
+        const file = uploadedFiles[index];
+        delete fileConfigs[file.filename];
+        uploadedFiles.splice(index, 1);
+        updateFilesList();
+        updateConfigPreview();
+    }
+    
+    function configureFile(filename, originalName) {
+        currentFileBeingConfigured = filename;
+        document.getElementById('modalFileName').textContent = originalName;
+        
+        const config = fileConfigs[filename] || {};
+        document.getElementById('filePrompt').value = config.prompt || '';
+        document.getElementById('fileDescription').value = config.prompt_description || '';
+        
+        new bootstrap.Modal(document.getElementById('fileConfigModal')).show();
+    }
+    
+    document.getElementById('saveFileConfig').addEventListener('click', function() {
+        if (!currentFileBeingConfigured) return;
+        
+        const prompt = document.getElementById('filePrompt').value.trim();
+        const description = document.getElementById('fileDescription').value.trim();
+        
+        if (prompt || description) {
+            fileConfigs[currentFileBeingConfigured] = {
+                prompt: prompt,
+                prompt_description: description
+            };
+        } else {
+            delete fileConfigs[currentFileBeingConfigured];
+        }
+        
+        updateFilesList();
+        updateConfigPreview();
+        bootstrap.Modal.getInstance(document.getElementById('fileConfigModal')).hide();
+    });
+    
+// merged
+    async function loadEvaluationRuns() {
+        try {
+            const response = await fetch('/api/evaluation/runs');
+            const result = await response.json();
+            
+            if (result.success) {
+                availableRuns = result.runs || [];
+                
+                // Auto-increment run number to next available
+                const maxRunNumber = availableRuns.length > 0 
+                    ? Math.max(...availableRuns.map(run => run.run_number))
+                    : 0;
+                const nextRunNumber = maxRunNumber + 1;
+                
+                document.getElementById('runNumber').value = nextRunNumber;
+                updateRunContext();
+                populateRunDropdown();
+                updateConfigPreview();
+            }
+        } catch (error) {
+            console.error('Failed to load evaluation runs:', error);
+        }
+    }
+    
+    function updateRunContext() {
+        const runNumber = parseInt(document.getElementById('runNumber').value) || 1;
+        const existingRun = availableRuns.find(run => run.run_number === runNumber);
+        
+        updateRunContextPanel(runNumber, existingRun);
+        updateRunNumberHelpText(runNumber, existingRun);
+    }
+    
+    function populateRunDropdown(searchTerm = '', showAll = false) {
+        const dropdownMenu = document.getElementById('runDropdownMenu');
+        
+        if (availableRuns.length === 0) {
+            dropdownMenu.innerHTML = `
+                <li><h6 class="dropdown-header">Available Runs</h6></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><span class="dropdown-item-text text-muted">No previous runs found</span></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="#" onclick="refreshRunData()">
+                    <svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" /></svg> Refresh
+                </a></li>
+            `;
+            return;
+        }
+        
+        const currentRunNumber = parseInt(document.getElementById('runNumber').value) || 1;
+        const maxRunNumber = Math.max(...availableRuns.map(run => run.run_number));
+        const nextRunNumber = maxRunNumber + 1;
+        
+        // Filter runs based on search term
+        let filteredRuns = availableRuns;
+        if (searchTerm) {
+            filteredRuns = availableRuns.filter(run => 
+                run.run_number.toString().includes(searchTerm) ||
+                (run.providers && run.providers.some(p => p.toLowerCase().includes(searchTerm.toLowerCase())))
+            );
+        }
+        
+        // Sort by run number descending (most recent first) and limit initial display
+        filteredRuns.sort((a, b) => b.run_number - a.run_number);
+        const displayRuns = showAll ? filteredRuns : filteredRuns.slice(0, 15);
+        const hasMore = filteredRuns.length > 15 && !showAll;
+        
+        const searchInput = `
+            <li class="px-3 py-2">
+                <input type="text" class="form-control form-control-sm" 
+                       placeholder="Search runs..." 
+                       value="${searchTerm}"
+                       onkeyup="populateRunDropdown(this.value)" />
+            </li>
+            <li><hr class="dropdown-divider"></li>
+        `;
+        
+        const recentRuns = displayRuns.map(run => {
+            const isSelected = run.run_number === currentRunNumber;
+            const successRate = run.total_evaluations > 0 
+                ? ((run.successful_evaluations / run.total_evaluations) * 100).toFixed(0)
+                : 0;
+            
+            return `
+                <li>
+                    <a class="dropdown-item ${isSelected ? 'active' : ''}" href="#" 
+                       onclick="selectRunNumber(${run.run_number})">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>Run #${run.run_number}</strong>
+                                <br><small class="text-muted">${run.total_evaluations} evaluations (${successRate}% success)</small>
+                            </div>
+                            <small class="text-muted">${run.providers ? run.providers.join(', ') : 'N/A'}</small>
+                        </div>
+                    </a>
+                </li>
+            `;
+        }).join('');
+        
+        const showMoreButton = hasMore ? `
+            <li><a class="dropdown-item text-center text-primary" href="#" onclick="populateRunDropdown('${searchTerm}', true)">
+                <svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg> Show ${filteredRuns.length - 15} more runs
+            </a></li>
+        ` : '';
+        
+        dropdownMenu.innerHTML = `
+            <li><h6 class="dropdown-header">Available Runs (${filteredRuns.length}${filteredRuns.length !== availableRuns.length ? ' filtered' : ''})</h6></li>
+            ${searchInput}
+            <li>
+                <a class="dropdown-item ${currentRunNumber === nextRunNumber ? 'active' : ''}" href="#" 
+                   onclick="selectRunNumber(${nextRunNumber})">
+                    <div class="d-flex align-items-center">
+                        <svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                        <div>
+                            <strong>New Run #${nextRunNumber}</strong>
+                            <br><small class="text-success">Create new run</small>
+                        </div>
+                    </div>
+                </a>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            ${recentRuns}
+            ${showMoreButton}
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#" onclick="refreshRunData()">
+                <svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" /></svg> Refresh Run Data
+            </a></li>
+        `;
+    }
+    
+    function selectRunNumber(runNumber) {
+        document.getElementById('runNumber').value = runNumber;
+        updateRunContext();
+        updateConfigPreview();
+    }
+    
+    function refreshRunData() {
+        loadEvaluationRuns();
+    }
+    
+    function viewResults(runNumber) {
+        // Navigate to results page with run number parameter
+        window.location.href = `/results?run=${runNumber}`;
+    }
+    
+    function startNewRun() {
+        // Reset to new run number and clear form
+        loadEvaluationRuns(); // This will auto-increment to next run number
+        
+        // Clear evaluation status and log
+        document.getElementById('evaluationStatus').innerHTML = '<div class="text-muted">Ready to run evaluation</div>';
+        document.getElementById('logOutput').style.display = 'none';
+        document.querySelector('.progress-container').style.display = 'none';
+        
+        showAlert('Ready for new evaluation run', 'info');
+    }
+    
+    function exportResults(runNumber) {
+        // Navigate to export with CSV format
+        window.open(`/api/results/${runNumber}/export/csv`, '_blank');
+    }
+    
+    function updateRunNumberHelpText(runNumber, existingRun) {
+        const helpText = document.getElementById('runNumberHelpText');
+        
+        if (existingRun) {
+            helpText.innerHTML = `<span class="text-warning"><svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg> Adding to existing run with ${existingRun.total_evaluations} evaluations</span>`;
+            helpText.className = 'form-text';
+        } else {
+            helpText.innerHTML = `<span class="text-success"><svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg> Creating new evaluation run</span>`;
+            helpText.className = 'form-text';
+        }
+    }
+    
+    function updateRunContextPanel(runNumber, existingRun) {
+        const contextDiv = document.getElementById('runContextInfo');
+        
+        if (!contextDiv) return;
+        
+        if (existingRun) {
+            // Existing run - show summary
+            const successRate = existingRun.total_evaluations > 0 
+                ? ((existingRun.successful_evaluations / existingRun.total_evaluations) * 100).toFixed(1)
+                : 0;
+            
+            const avgResponseTime = existingRun.avg_response_time 
+                ? (existingRun.avg_response_time * 1000).toFixed(0) + 'ms'
+                : 'N/A';
+            
+            const lastRun = existingRun.latest_timestamp 
+                ? new Date(existingRun.latest_timestamp + 'Z').toLocaleString()
+                : 'Unknown';
+            
+            contextDiv.innerHTML = `
+                <div class="run-status existing-run">
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="badge bg-warning text-dark">Existing Run #${runNumber}</span>
+                        <svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg>
+                    </div>
+                    <div class="run-details small">
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <strong>Evaluations:</strong><br>
+                                <span class="text-success">${existingRun.successful_evaluations}</span>/${existingRun.total_evaluations}
+                            </div>
+                            <div class="col-6">
+                                <strong>Success Rate:</strong><br>
+                                ${successRate}%
+                            </div>
+                            <div class="col-6">
+                                <strong>Models:</strong><br>
+                                ${existingRun.unique_models}
+                            </div>
+                            <div class="col-6">
+                                <strong>Providers:</strong><br>
+                                ${existingRun.unique_providers}
+                            </div>
+                            <div class="col-6">
+                                <strong>Avg Time:</strong><br>
+                                ${avgResponseTime}
+                            </div>
+                            <div class="col-6">
+                                <strong>Last Run:</strong><br>
+                                ${lastRun.split(' ')[0]}
+                            </div>
+                        </div>
+                        ${existingRun.providers && existingRun.providers.length > 0 ? `
+                            <div class="mt-2">
+                                <strong>Used Providers:</strong><br>
+                                <small class="text-muted">${existingRun.providers.join(', ')}</small>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="alert alert-warning alert-sm mt-2 mb-1 py-1">
+                        <small><svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" /></svg> New evaluations will be added to this existing run.</small>
+                    </div>
+                    <div class="d-grid">
+                        <button type="button" class="btn btn-primary btn-sm" onclick="viewResults(${runNumber})">
+                            <svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" /></svg> View Results
+                        </button>
+                    </div>
+                </div>
+            `;
+        } else {
+            // New run
+            contextDiv.innerHTML = `
+                <div class="run-status new-run">
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="badge bg-success">New Run #${runNumber}</span>
+                        <svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                    </div>
+                    <div class="run-details small text-muted">
+                        <div class="text-center py-3">
+                            <svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.59 14.37a6 6 0 0 1-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 0 0 6.16-12.12A14.98 14.98 0 0 0 9.631 8.41m5.96 5.96a14.926 14.926 0 0 1-5.841 2.58m-.119-8.54a6 6 0 0 0-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 0 0-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 0 1-2.448-2.448 14.9 14.9 0 0 1 .06-.312m-2.24 2.39a4.493 4.493 0 0 0-1.757 4.306 4.493 4.493 0 0 0 4.306-1.758M16.5 9a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" /></svg><br>
+                            <strong>Fresh Start</strong><br>
+                            This will create a new evaluation run with no previous data.
+                        </div>
+                    </div>
+                    ${availableRuns.length > 0 ? `
+                        <div class="recent-runs mt-2">
+                            <small class="text-muted"><strong>Recent Runs:</strong></small>
+                            <div class="mt-1">
+                                ${availableRuns.slice(0, 5).map(run => `
+                                    <button type="button" class="btn btn-outline-secondary btn-sm me-1 mb-1" 
+                                            onclick="document.getElementById('runNumber').value=${run.run_number}; updateRunContext();">
+                                        #${run.run_number} (${run.total_evaluations})
+                                    </button>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+    }
+
+    async function populateProviderSelection() {
+        const providerDiv = document.getElementById('providerSelection');
+
+        console.log('📋 populateProviderSelection called');
+        console.log('📋 availableProviders:', availableProviders);
+        console.log('📋 availableModels:', availableModels);
+
+        // Check if providers are loaded
+        if (!availableProviders || !Array.isArray(availableProviders) || availableProviders.length === 0) {
+            console.warn('⚠️ availableProviders not loaded yet');
+            providerDiv.innerHTML = '<p class="text-muted">Loading providers...</p>';
+            return;
+        }
+
+        // Fetch provider status
+        let providerStatus = {};
+        try {
+            const statusResponse = await fetch('/api/providers/status');
+            const statusData = await statusResponse.json();
+            if (statusData.success) {
+                providerStatus = statusData.status;
+            }
+        } catch (error) {
+            console.warn('Failed to fetch provider status:', error);
+        }
+
+        const html = availableProviders.map(provider => {
+            const status = providerStatus[provider];
+            const isConfigured = status ? status.configured : false;
+            const modelCount = status ? status.model_count : (availableModels[provider] || []).length;
+            const statusIcon = isConfigured ? 
+                '<svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>' : 
+                '<svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>';
+            
+            return `
+            <div class="form-check">
+                <input class="form-check-input provider-checkbox" type="checkbox" value="${provider}" id="provider_${provider}">
+                <label class="form-check-label" for="provider_${provider}">
+                        ${provider.charAt(0).toUpperCase() + provider.slice(1)}${statusIcon}
+                        <span class="model-badge">${modelCount} models</span>
+                </label>
+            </div>
+            `;
+        }).join('');
+        
+        providerDiv.innerHTML = html;
+        
+        // Add event listeners
+        document.querySelectorAll('.provider-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', updateModelSelection);
+        });
+    }
+    
+    async function refreshProviderStatus() {
+        // Refresh provider status indicators
+        try {
+            const statusResponse = await fetch('/api/providers/status');
+            const statusData = await statusResponse.json();
+            
+            if (statusData.success) {
+                const providerStatus = statusData.status;
+                
+                // Update status icons for each provider
+                Object.keys(providerStatus).forEach(provider => {
+                    const status = providerStatus[provider];
+                    const isConfigured = status.configured;
+                    const modelCount = status.model_count;
+                    
+                    const label = document.querySelector(`label[for="provider_${provider}"]`);
+                    if (label) {
+                        const statusIcon = isConfigured ? 
+                            '<svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>' : 
+                            '<svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>';
+                        
+                        const modelBadge = label.querySelector('.model-badge');
+                        if (modelBadge) {
+                            modelBadge.textContent = `${modelCount} models`;
+                        }
+                        
+                        // Update the label content
+                        const providerName = provider.charAt(0).toUpperCase() + provider.slice(1);
+                        label.innerHTML = `${providerName}${statusIcon} <span class="model-badge">${modelCount} models</span>`;
+                    }
+                });
+            }
+        } catch (error) {
+            console.warn('Failed to refresh provider status:', error);
+        }
+    }
+    
+    function updateModelSelection() {
+        const selectedProviders = Array.from(document.querySelectorAll('.provider-checkbox:checked'))
+            .map(cb => cb.value);
+        
+        const modelDiv = document.getElementById('modelSelection');
+        
+        // Save currently selected models before regenerating HTML
+        const currentlySelected = Array.from(document.querySelectorAll('.model-checkbox:checked'))
+            .map(cb => cb.value);
+        
+        if (selectedProviders.length === 0) {
+            modelDiv.innerHTML = '<p class="text-muted">Select providers first</p>';
+            return;
+        }
+        
+        let allModels = [];
+        selectedProviders.forEach(provider => {
+            const models = availableModels[provider] || [];
+            models.forEach(model => allModels.push({ provider, model }));
+        });
+        
+        const html = allModels.map(({ provider, model }) => {
+            // Check if we have detailed model info for any provider
+            let modelInfo = null;
+            if (provider === 'gemini' && window.geminiModelsDetail) {
+                modelInfo = window.geminiModelsDetail.find(m => {
+                    const apiModelName = m.base_model_id || m.name.replace('models/', '');
+                    return apiModelName === model;
+                });
+            } else if (provider === 'openai' && window.openaiModelsDetail) {
+                modelInfo = window.openaiModelsDetail.find(m => m.id === model);
+            } else if (provider === 'anthropic' && window.anthropicModelsDetail) {
+                modelInfo = window.anthropicModelsDetail.find(m => m.id === model);
+            } else if (provider === 'deepseek' && window.deepseekModelsDetail) {
+                modelInfo = window.deepseekModelsDetail.find(m => m.id === model);
+            } else if (provider === 'together' && window.togetherModelsDetail) {
+                modelInfo = window.togetherModelsDetail.find(m => m.id === model);
+            }
+            
+            const modelId = model.replace(/[^a-zA-Z0-9]/g, '_');
+            const displayName = modelInfo ? (modelInfo.display_name || modelInfo.id) : model;
+            const tokenLimit = modelInfo ? (modelInfo.input_token_limit || modelInfo.context_length || 0) : 0;
+            const supportsFiles = modelInfo ? modelInfo.supports_file_upload : false;
+            const supportsVision = modelInfo ? modelInfo.supports_vision : false;
+            const thinking = modelInfo ? modelInfo.thinking : false;
+            
+            return `
+            <div class="form-check">
+                    <input class="form-check-input model-checkbox" type="checkbox" value="${model}" id="model_${modelId}">
+                    <label class="form-check-label small" for="model_${modelId}">
+                        <div class="d-flex align-items-center">
+                            <div class="ms-2">
+                                <div class="fw-medium text-dark">${displayName}</div>
+                                <div class="d-flex gap-2 mt-1">
+                                    ${tokenLimit > 0 ? `<span class="badge bg-info" style="font-size: 0.6rem;">${Math.round(tokenLimit/1000)}K tokens</span>` : ''}
+                                    ${supportsFiles ? `<span class="badge bg-success" style="font-size: 0.6rem;">Files</span>` : ''}
+                                    ${supportsVision ? `<span class="badge bg-primary" style="font-size: 0.6rem;">Vision</span>` : ''}
+                                    ${thinking ? `<span class="badge bg-warning" style="font-size: 0.6rem;">Thinking</span>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                </label>
+            </div>
+            `;
+        }).join('');
+        
+        modelDiv.innerHTML = html || '<p class="text-muted">No models available</p>';
+        
+        // Restore previously selected models that still exist
+        currentlySelected.forEach(selectedModel => {
+            const checkbox = document.getElementById(`model_${selectedModel.replace(/[^a-zA-Z0-9]/g, '_')}`);
+            if (checkbox) {
+                checkbox.checked = true;
+            }
+        });
+        
+        // Add event listeners
+        document.querySelectorAll('.model-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', updateConfigPreview);
+        });
+        
+        updateConfigPreview();
+    }
+    
+    function updateConfigPreview() {
+        const config = getCurrentConfig();
+        document.getElementById('configPreview').textContent = JSON.stringify(config, null, 2);
+    }
+    
+    function getCurrentConfig() {
+        const selectedProviders = Array.from(document.querySelectorAll('.provider-checkbox:checked'))
+            .map(cb => cb.value);
+        
+        const selectedModels = Array.from(document.querySelectorAll('.model-checkbox:checked'))
+            .map(cb => cb.value);
+        
+        const files = uploadedFiles.map(file => {
+            const config = fileConfigs[file.filename] || {};
+            return {
+                path: file.filepath,
+                prompt: config.prompt || document.getElementById('defaultPrompt').value.trim(),
+                prompt_description: config.prompt_description || ''
+            };
+        });
+        
+        return {
+            run_number: parseInt(document.getElementById('runNumber').value) || 1,
+            providers: selectedProviders.length > 0 ? selectedProviders : null,
+            models: selectedModels.length > 0 ? selectedModels : null,
+            files: files,
+            default_prompt: document.getElementById('defaultPrompt').value.trim(),
+            ultra_mode:true ,
+            max_concurrent: parseInt(document.getElementById('maxConcurrent').value) || 15
+        };
+    }
+    
+    function setupMainEventListeners() {
+        // Main action buttons
+        document.getElementById('runEvaluation').addEventListener('click', runEvaluation);
+        document.getElementById('saveConfig').addEventListener('click', saveConfig);
+        document.getElementById('loadConfig').addEventListener('click', () => {
+            new bootstrap.Modal(document.getElementById('loadConfigModal')).show();
+        });
+        document.getElementById('clearForm').addEventListener('click', clearForm);
+        
+        // Load config file button
+        document.getElementById('loadConfigFile').addEventListener('click', function() {
+            const fileInput = document.getElementById('configFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showAlert('Please select a configuration file', 'warning');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const config = JSON.parse(e.target.result);
+                    loadConfigIntoForm(config);
+                    bootstrap.Modal.getInstance(document.getElementById('loadConfigModal')).hide();
+                    showAlert('Configuration loaded successfully', 'success');
+                } catch (error) {
+                    showAlert('Invalid configuration file: ' + error.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+        });
+        
+        // Form change listeners
+        ['runNumber', 'maxConcurrent', 'ultraMode', 'defaultPrompt'].forEach(id => {
+            document.getElementById(id).addEventListener('change', updateConfigPreview);
+            document.getElementById(id).addEventListener('input', updateConfigPreview);
+        });
+        
+        // Special handler for run number to update context
+        document.getElementById('runNumber').addEventListener('change', updateRunContext);
+        document.getElementById('runNumber').addEventListener('input', updateRunContext);
+    }
+    
+    async function runEvaluation() {
+        if (evaluationRunning) {
+            showAlert('Evaluation already running', 'warning');
+            return;
+        }
+        
+        const config = getCurrentConfig();
+        
+        if (config.files.length === 0) {
+            showAlert('Please upload at least one file', 'warning');
+            return;
+        }
+        
+        // Check if at least one model is selected
+        const selectedModels = Array.from(document.querySelectorAll('.model-checkbox:checked'));
+        if (selectedModels.length === 0) {
+            showAlert('Please select at least one model for evaluation', 'warning');
+            return;
+        }
+        
+        evaluationRunning = true;
+        document.getElementById('runEvaluation').disabled = true;
+        document.querySelector('.progress-container').style.display = 'block';
+        document.getElementById('logOutput').style.display = 'block';
+        
+        updateEvaluationStatus('Starting evaluation...', 'running');
+        
+        try {
+            const response = await fetch('/api/evaluate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(config)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                const summary = result.summary;
+                if (summary.total_tasks === 0) {
+                    updateEvaluationStatus('Evaluation completed - No tasks created', 'warning');
+                    showAlert('Evaluation completed but no tasks were created', 'warning');
+                } else if (summary.failed_tasks === summary.total_tasks) {
+                    updateEvaluationStatus('Evaluation completed - All tasks failed', 'error');
+                    showAlert(`Evaluation completed but all ${summary.total_tasks} tasks failed`, 'error');
+                } else if (summary.successful_tasks === summary.total_tasks) {
+                updateEvaluationStatus('Evaluation completed successfully!', 'completed');
+                    showAlert(`Evaluation completed successfully! Run #${result.run_number}`, 'success');
+                } else {
+                    updateEvaluationStatus(`Evaluation completed - ${summary.successful_tasks}/${summary.total_tasks} tasks succeeded`, 'warning');
+                    showAlert(`Evaluation completed with mixed results: ${summary.successful_tasks}/${summary.total_tasks} tasks succeeded`, 'warning');
+                }
+                showEvaluationResults(result);
+            } else {
+                updateEvaluationStatus('Evaluation failed: ' + result.error, 'error');
+                showAlert('Evaluation failed: ' + result.error, 'error');
+            }
+        } catch (error) {
+            updateEvaluationStatus('Error: ' + error.message, 'error');
+            showAlert('Error running evaluation: ' + error.message, 'error');
+        } finally {
+            evaluationRunning = false;
+            document.getElementById('runEvaluation').disabled = false;
+        }
+    }
+    
+    function updateEvaluationStatus(message, status) {
+        const statusDiv = document.getElementById('evaluationStatus');
+        statusDiv.innerHTML = `<div class="evaluation-status status-${status}">${message}</div>`;
+    }
+    
+    function showEvaluationResults(result) {
+        const summary = result.summary;
+        const logDiv = document.getElementById('logOutput');
+        
+        logDiv.innerHTML = `
+<div class="evaluation-complete-panel">
+    <div class="row">
+        <div class="col-md-8">
+            <h6 class="text-success mb-3"><svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg> Evaluation Complete!</h6>
+            <div class="row g-3 mb-3">
+                <div class="col-6 col-md-3">
+                    <div class="text-center">
+                        <div class="h5 text-success mb-0">${summary.successful_tasks}</div>
+                        <small class="text-muted">Successful</small>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="text-center">
+                        <div class="h5 text-danger mb-0">${summary.failed_tasks}</div>
+                        <small class="text-muted">Failed</small>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="text-center">
+                        <div class="h5 text-primary mb-0">${(summary.success_rate * 100).toFixed(1)}%</div>
+                        <small class="text-muted">Success Rate</small>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="text-center">
+                        <div class="h5 text-info mb-0">${formatDuration(summary.average_time_per_task)}</div>
+                        <small class="text-muted">Avg Time</small>
+                    </div>
+                </div>
+            </div>
+            <div class="small text-muted">
+                <strong>Providers:</strong> ${(summary.providers_used || []).join(', ')}<br>
+                <strong>Models:</strong> ${(summary.models_used || []).join(', ')}<br>
+                <strong>Files:</strong> ${(summary.files_processed || []).length} processed
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="d-grid gap-2">
+                <button type="button" class="btn btn-primary" onclick="viewResults(${result.run_number})">
+                    <svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" /></svg> View Results
+                </button>
+                <button type="button" class="btn btn-outline-secondary" onclick="startNewRun()">
+                    <svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg> Run Another
+                </button>
+                <button type="button" class="btn btn-outline-info btn-sm" onclick="exportResults(${result.run_number})">
+                    <svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg> Export
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+        `;
+        
+        // Add "View Results" link at bottom of widget if evaluation completed successfully
+        if (summary.total_tasks > 0 && result.run_number) {
+            // Add CTA link in the Evaluation Status widget
+            const evaluationStatus = document.getElementById('evaluationStatus');
+            evaluationStatus.innerHTML = `
+                <div class="alert alert-success mb-3">
+                    <svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg> Evaluation completed successfully!
+                </div>
+            `;
+        }
+        
+        // Update progress bar based on actual results
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        
+        if (summary.total_tasks === 0) {
+            // No tasks were created
+            progressBar.style.width = '0%';
+            progressBar.textContent = 'No Tasks';
+            progressBar.className = 'progress-bar bg-warning';
+            progressText.textContent = 'No tasks were created for evaluation';
+        } else if (summary.failed_tasks === summary.total_tasks) {
+            // All tasks failed
+            progressBar.style.width = '100%';
+            progressBar.textContent = 'Failed';
+            progressBar.className = 'progress-bar bg-danger';
+            progressText.textContent = `${summary.failed_tasks}/${summary.total_tasks} tasks failed`;
+            
+            // Add CTA link for failed evaluation
+            if (result.run_number) {
+                const evaluationStatus = document.getElementById('evaluationStatus');
+                evaluationStatus.innerHTML = `
+                    <div class="alert alert-danger mb-3">
+                        <svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg> Evaluation completed with failures - 
+                        <a href="/results?run_number=${result.run_number}" target="_blank" class="alert-link">
+                            View Results & Debug
+                        </a>
+                    </div>
+                `;
+            }
+        } else if (summary.successful_tasks === summary.total_tasks) {
+            // All tasks succeeded
+        progressBar.style.width = '100%';
+        progressBar.textContent = 'Complete';
+            progressBar.className = 'progress-bar bg-success';
+            progressText.textContent = `${summary.successful_tasks}/${summary.total_tasks} tasks completed successfully`;
+        } else {
+            // Mixed results
+            const successRate = summary.success_rate;
+            progressBar.style.width = `${successRate * 100}%`;
+            progressBar.textContent = 'Partial';
+            progressBar.className = 'progress-bar bg-warning';
+            progressText.textContent = `${summary.successful_tasks}/${summary.total_tasks} tasks completed (${(successRate * 100).toFixed(1)}% success rate)`;
+            
+            // Add CTA link for mixed results
+            if (result.run_number) {
+                const evaluationStatus = document.getElementById('evaluationStatus');
+                evaluationStatus.innerHTML = `
+                    <div class="alert alert-warning mb-3">
+                        <svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" /></svg> Evaluation completed with mixed results - 
+                        <a href="/results?run_number=${result.run_number}" target="_blank" class="alert-link">
+                            View Results & Analyze
+                        </a>
+                    </div>
+                `;
+            }
+        }
+        
+        // Add "View Results" link at bottom of widget for all completed evaluations
+        if (summary.total_tasks > 0 && result.run_number) {
+            const evaluationStatus = document.getElementById('evaluationStatus');
+            const existingContent = evaluationStatus.innerHTML;
+            evaluationStatus.innerHTML = existingContent + `
+                <div class="text-center mt-3">
+                    <a href="/results?run_number=${result.run_number}" target="_blank" class="text-decoration-none">
+                        <svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg> View Results (Run #${result.run_number})
+                    </a>
+                </div>
+            `;
+        }
+    }
+    
+    async function saveConfig() {
+        const config = getCurrentConfig();
+        
+        try {
+            const response = await fetch('/api/config/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(config)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showAlert(`Configuration saved as ${result.filename}`, 'success');
+                
+                // Trigger download
+                const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = result.filename;
+                a.click();
+                URL.revokeObjectURL(url);
+            } else {
+                showAlert('Failed to save configuration: ' + result.error, 'error');
+            }
+        } catch (error) {
+            showAlert('Error saving configuration: ' + error.message, 'error');
+        }
+    }
+    
+    
+    function loadConfigIntoForm(config) {
+        // Basic settings
+        if (config.run_number) document.getElementById('runNumber').value = config.run_number;
+        if (config.max_concurrent) document.getElementById('maxConcurrent').value = config.max_concurrent;
+        if (config.ultra_mode !== undefined) document.getElementById('ultraMode').checked = config.ultra_mode;
+        if (config.default_prompt) document.getElementById('defaultPrompt').value = config.default_prompt;
+        
+        // Provider selection
+        document.querySelectorAll('.provider-checkbox').forEach(cb => cb.checked = false);
+        if (config.providers) {
+            config.providers.forEach(provider => {
+                const checkbox = document.getElementById(`provider_${provider}`);
+                if (checkbox) checkbox.checked = true;
+            });
+        }
+        
+        updateModelSelection();
+        
+        // Model selection
+        setTimeout(() => {
+            document.querySelectorAll('.model-checkbox').forEach(cb => cb.checked = false);
+            if (config.models) {
+                config.models.forEach(model => {
+                    const checkbox = document.getElementById(`model_${model.replace(/[^a-zA-Z0-9]/g, '_')}`);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+            updateConfigPreview();
+        }, 100);
+        
+        // File configurations
+        fileConfigs = {};
+        if (config.files) {
+            config.files.forEach(file => {
+                if (file.prompt || file.prompt_description) {
+                    fileConfigs[file.path] = {
+                        prompt: file.prompt,
+                        prompt_description: file.prompt_description
+                    };
+                }
+            });
+        }
+    }
+    
+    function clearForm() {
+        if (confirm('Are you sure you want to clear all configuration?')) {
+            // Reset form
+            document.getElementById('configForm').reset();
+            document.getElementById('runNumber').value = 1;
+            document.getElementById('maxConcurrent').value = 15;
+            document.getElementById('ultraMode').checked = true;
+            
+            // Clear files
+            uploadedFiles = [];
+            fileConfigs = {};
+            updateFilesList();
+            
+            // Clear selections
+            document.querySelectorAll('.provider-checkbox').forEach(cb => cb.checked = false);
+            updateModelSelection();
+            updateConfigPreview();
+            
+            showAlert('Configuration cleared', 'info');
+        }
+    }
+    
+    // Prompt Options Functions
+    function showPromptOptions(targetTextareaId, targetDescriptionId = null) {
+        if (!availablePrompts || availablePrompts.length === 0) {
+            showAlert('No saved prompts found. Loading...', 'info');
+            loadAvailablePrompts().then(() => {
+                if (availablePrompts.length > 0) {
+                    showPromptOptionsModal(targetTextareaId, targetDescriptionId);
+                } else {
+                    showAlert('No saved prompts available', 'warning');
+                }
+            });
+            return;
+        }
+        showPromptOptionsModal(targetTextareaId, targetDescriptionId);
+    }
+    
+    function showPromptOptionsModal(targetTextareaId, targetDescriptionId = null) {
+        // Create modal HTML
+        const modalHtml = `
+            <div class="modal fade" id="promptOptionsModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Select Existing Prompt</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="list-group" id="promptOptionsList">
+                                ${availablePrompts.map((prompt, index) => `
+                                    <button type="button" class="list-group-item list-group-item-action" 
+                                            onclick="selectPromptOption('${targetTextareaId}', ${targetDescriptionId ? `'${targetDescriptionId}'` : 'null'}, ${index})">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h6 class="mb-1">${prompt.text.substring(0, 60)}${prompt.text.length > 60 ? '...' : ''}</h6>
+                                            <small>${prompt.usage_count} uses</small>
+                                        </div>
+                                        ${prompt.description ? `<p class="mb-1 text-muted">${prompt.description}</p>` : ''}
+                                    </button>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Remove existing modal if present
+        const existingModal = document.getElementById('promptOptionsModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        // Add modal to DOM
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('promptOptionsModal'));
+        modal.show();
+        
+        // Clean up when modal is hidden
+        document.getElementById('promptOptionsModal').addEventListener('hidden.bs.modal', function() {
+            this.remove();
+        });
+    }
+    
+    function selectPromptOption(targetTextareaId, targetDescriptionId, promptIndex) {
+        const prompt = availablePrompts[promptIndex];
+        if (!prompt) return;
+        
+        // Set the prompt text
+        const textarea = document.getElementById(targetTextareaId);
+        if (textarea) {
+            textarea.value = prompt.text;
+        }
+        
+        // Set the description if target provided
+        if (targetDescriptionId && prompt.description) {
+            const descriptionField = document.getElementById(targetDescriptionId);
+            if (descriptionField) {
+                descriptionField.value = prompt.description;
+            }
+        }
+        
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('promptOptionsModal'));
+        if (modal) {
+            modal.hide();
+        }
+        
+        // Update config preview if needed
+        if (typeof updateConfigPreview === 'function') {
+            updateConfigPreview();
+        }
+        
+        showAlert('Prompt loaded successfully', 'success');
+    }
+    
+    // Prompt Management Functions
+    async function loadAvailablePrompts() {
+        try {
+            const response = await fetch('/api/prompts');
+            const data = await response.json();
+            
+            if (data.success) {
+                availablePrompts = data.prompts || [];
+                populatePromptDropdowns();
+            } else {
+                console.error('Failed to load prompts:', data.error);
+            }
+        } catch (error) {
+            console.error('Error loading prompts:', error);
+        }
+    }
+    
+    function populatePromptDropdowns() {
+        const dropdowns = ['promptDropdown', 'filePromptDropdown'];
+        
+        dropdowns.forEach(dropdownId => {
+            const dropdown = document.getElementById(dropdownId);
+            if (!dropdown) return;
+            
+            // Clear existing options except the first one
+            dropdown.innerHTML = '<option value="">Type new prompt...</option>';
+            
+            // Add available prompts
+            availablePrompts.forEach(prompt => {
+                const option = document.createElement('option');
+                option.value = prompt.hash;
+                option.textContent = `${prompt.text.substring(0, 50)}${prompt.text.length > 50 ? '...' : ''} (${prompt.usage_count} uses)`;
+                option.setAttribute('data-prompt-text', prompt.text);
+                option.setAttribute('data-prompt-description', prompt.description);
+                dropdown.appendChild(option);
+            });
+        });
+    }
+    
+    function setupPromptEventListeners() {
+        // Default prompt dropdown
+        const promptDropdown = document.getElementById('promptDropdown');
+        if (promptDropdown) {
+            promptDropdown.addEventListener('change', function() {
+                if (this.value) {
+                    const selectedOption = this.options[this.selectedIndex];
+                    const promptText = selectedOption.getAttribute('data-prompt-text');
+                    if (promptText) {
+                        document.getElementById('defaultPrompt').value = promptText;
+                        updateConfigPreview();
+                    }
+                }
+            });
+        }
+        
+        // File prompt dropdown
+        const filePromptDropdown = document.getElementById('filePromptDropdown');
+        if (filePromptDropdown) {
+            filePromptDropdown.addEventListener('change', function() {
+                if (this.value) {
+                    const selectedOption = this.options[this.selectedIndex];
+                    const promptText = selectedOption.getAttribute('data-prompt-text');
+                    const promptDescription = selectedOption.getAttribute('data-prompt-description');
+                    if (promptText) {
+                        document.getElementById('filePrompt').value = promptText;
+                        if (promptDescription) {
+                            document.getElementById('fileDescription').value = promptDescription;
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Refresh buttons
+        const refreshButtons = ['refreshPrompts', 'refreshFilePrompts'];
+        refreshButtons.forEach(buttonId => {
+            const button = document.getElementById(buttonId);
+            if (button) {
+                button.addEventListener('click', async function() {
+                    button.innerHTML = '<svg class="heroicon animate-spin" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>';
+                    await loadAvailablePrompts();
+                    button.innerHTML = '<svg class="heroicon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>';
+                });
+            }
+        });
+        
+        // Prompt options buttons
+        const defaultPromptOptionsBtn = document.getElementById('showDefaultPromptOptions');
+        if (defaultPromptOptionsBtn) {
+            defaultPromptOptionsBtn.addEventListener('click', function() {
+                showPromptOptions('defaultPrompt');
+            });
+        }
+        
+        const filePromptOptionsBtn = document.getElementById('showPromptOptions');
+        if (filePromptOptionsBtn) {
+            filePromptOptionsBtn.addEventListener('click', function() {
+                showPromptOptions('filePrompt', 'fileDescription');
+            });
+        }
+    }
+    
+</script>
+{% endblock %}

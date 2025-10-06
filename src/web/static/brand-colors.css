@@ -1,0 +1,179 @@
+/* Brand Color System - Based on Corporate Identity Guidelines */
+
+:root {
+  /* Primary Brand Colors */
+  --brand-indigo: #192440;
+  --brand-indigo-rgb: 25, 36, 64;
+  --brand-white: #FFFFFF;
+  --brand-white-rgb: 255, 255, 255;
+  --brand-ice: #BADEF0;
+  --brand-ice-rgb: 186, 222, 240;
+
+  /* Secondary Colors */
+  --brand-orange: #F49719;
+  --brand-orange-rgb: 244, 151, 25;
+  --brand-lemon: #F7CF45;
+  --brand-lemon-rgb: 247, 207, 69;
+
+  /* Text Color */
+  --brand-grey: #1A1A1A;
+  --brand-grey-rgb: 26, 26, 26;
+
+  /* Tertiary Colors */
+  --brand-charcoal: #434A52;
+  --brand-charcoal-rgb: 67, 74, 82;
+  --brand-heather: #D3D9DF;
+  --brand-heather-rgb: 211, 217, 223;
+  --brand-slate: #8D9CAC;
+  --brand-slate-rgb: 141, 156, 172;
+  --brand-soft-white: #FAFAFF;
+  --brand-soft-white-rgb: 250, 250, 255;
+
+  /* Semantic Color Mappings */
+  --color-primary: var(--brand-indigo);
+  --color-primary-rgb: var(--brand-indigo-rgb);
+  --color-secondary: var(--brand-orange);
+  --color-secondary-rgb: var(--brand-orange-rgb);
+  --color-accent: var(--brand-ice);
+  --color-accent-rgb: var(--brand-ice-rgb);
+  --color-warning: var(--brand-lemon);
+  --color-warning-rgb: var(--brand-lemon-rgb);
+  --color-text: var(--brand-grey);
+  --color-text-rgb: var(--brand-grey-rgb);
+  --color-text-light: var(--brand-slate);
+  --color-text-light-rgb: var(--brand-slate-rgb);
+  --color-background: var(--brand-white);
+  --color-background-rgb: var(--brand-white-rgb);
+  --color-background-soft: var(--brand-soft-white);
+  --color-background-soft-rgb: var(--brand-soft-white-rgb);
+  --color-surface: var(--brand-heather);
+  --color-surface-rgb: var(--brand-heather-rgb);
+
+  /* Bootstrap Override Variables */
+  --bs-primary: var(--brand-indigo);
+  --bs-primary-rgb: var(--brand-indigo-rgb);
+  --bs-secondary: var(--brand-slate);
+  --bs-secondary-rgb: var(--brand-slate-rgb);
+  --bs-success: #28a745; /* Keep Bootstrap green for success states */
+  --bs-info: var(--brand-ice);
+  --bs-info-rgb: var(--brand-ice-rgb);
+  --bs-warning: var(--brand-lemon);
+  --bs-warning-rgb: var(--brand-lemon-rgb);
+  --bs-danger: #dc3545; /* Keep Bootstrap red for danger states */
+  --bs-light: var(--brand-heather);
+  --bs-light-rgb: var(--brand-heather-rgb);
+  --bs-dark: var(--brand-charcoal);
+  --bs-dark-rgb: var(--brand-charcoal-rgb);
+
+  /* Interactive States */
+  --color-primary-hover: #0f1a2f;
+  --color-primary-active: #0a1122;
+  --color-secondary-hover: #e0850e;
+  --color-secondary-active: #cc7408;
+  --color-accent-hover: #a8d4e8;
+  --color-accent-active: #96cae0;
+
+  /* Utility Colors with Brand Consistency */
+  --color-border: var(--brand-heather);
+  --color-border-light: rgba(var(--brand-heather-rgb), 0.5);
+  --color-shadow: rgba(var(--brand-indigo-rgb), 0.15);
+  --color-overlay: rgba(var(--brand-indigo-rgb), 0.8);
+
+  /* Radii */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 1.5rem;
+  --radius-button: 24px;  /* Eye Security inspired rounded buttons */
+
+  /* Shadows */
+  --shadow-brand-sm: 0 1px 2px rgba(var(--brand-indigo-rgb), 0.08), 0 1px 1px rgba(var(--brand-indigo-rgb), 0.04);
+  --shadow-brand: 0 6px 16px rgba(var(--brand-indigo-rgb), 0.12);
+  --shadow-brand-lg: 0 14px 32px rgba(var(--brand-indigo-rgb), 0.18);
+
+  /* Focus Rings */
+  --ring-color: rgba(var(--brand-indigo-rgb), 0.35);
+  --ring-color-accent: rgba(var(--brand-ice-rgb), 0.45);
+
+  /* Motion */
+  --transition-fast: 150ms ease;
+  --transition-base: 200ms ease;
+
+  /* Links */
+  --link-color: var(--color-primary);
+  --link-hover-color: var(--color-primary-hover);
+
+  /* Gradients */
+  --gradient-brand-primary: linear-gradient(135deg, var(--brand-indigo) 0%, rgba(var(--brand-indigo-rgb), 0.8) 100%);
+  --gradient-brand-hero: linear-gradient(135deg, var(--brand-indigo) 0%, rgba(var(--brand-indigo-rgb), 0.8) 100%);
+  --gradient-brand-card: linear-gradient(135deg, var(--brand-soft-white) 0%, var(--brand-heather) 100%);
+}
+
+/* Brand Color Utility Classes */
+.text-brand-primary { color: var(--brand-indigo) !important; }
+.text-brand-secondary { color: var(--brand-orange) !important; }
+.text-brand-accent { color: var(--brand-ice) !important; }
+.text-brand-warning { color: var(--brand-lemon) !important; }
+.text-brand-grey { color: var(--brand-grey) !important; }
+.text-brand-slate { color: var(--brand-slate) !important; }
+
+.bg-brand-primary { background-color: var(--brand-indigo) !important; }
+.bg-brand-secondary { background-color: var(--brand-orange) !important; }
+.bg-brand-accent { background-color: var(--brand-ice) !important; }
+.bg-brand-warning { background-color: var(--brand-lemon) !important; }
+.bg-brand-soft { background-color: var(--brand-soft-white) !important; }
+.bg-brand-surface { background-color: var(--brand-heather) !important; }
+
+.border-brand-primary { border-color: var(--brand-indigo) !important; }
+.border-brand-secondary { border-color: var(--brand-orange) !important; }
+.border-brand-accent { border-color: var(--brand-ice) !important; }
+.border-brand-surface { border-color: var(--brand-heather) !important; }
+
+/* Brand Gradient Utilities */
+.gradient-brand-primary {
+  background: linear-gradient(135deg, var(--brand-indigo) 0%, rgba(var(--brand-indigo-rgb), 0.8) 100%) !important;
+}
+
+.gradient-brand-hero {
+  background: linear-gradient(135deg, var(--brand-indigo) 0%, rgba(var(--brand-indigo-rgb), 0.8) 100%) !important;
+}
+
+.gradient-brand-card {
+  background: linear-gradient(135deg, var(--brand-soft-white) 0%, var(--brand-heather) 100%) !important;
+}
+
+/* Enhanced Interactive States */
+.btn-brand-primary {
+  background-color: var(--brand-indigo);
+  border-color: var(--brand-indigo);
+  color: var(--brand-white);
+}
+
+.btn-brand-primary:hover {
+  background-color: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+  color: var(--brand-white);
+}
+
+.btn-brand-primary:active {
+  background-color: var(--color-primary-active);
+  border-color: var(--color-primary-active);
+  color: var(--brand-white);
+}
+
+.btn-brand-secondary {
+  background-color: var(--brand-orange);
+  border-color: var(--brand-orange);
+  color: var(--brand-white);
+}
+
+.btn-brand-secondary:hover {
+  background-color: var(--color-secondary-hover);
+  border-color: var(--color-secondary-hover);
+  color: var(--brand-white);
+}
+
+/* Brand Shadow Utilities */
+.shadow-brand { box-shadow: var(--shadow-brand) !important; }
+.shadow-brand-sm { box-shadow: var(--shadow-brand-sm) !important; }
+.shadow-brand-lg { box-shadow: var(--shadow-brand-lg) !important; }

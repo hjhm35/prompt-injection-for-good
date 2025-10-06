@@ -1,0 +1,985 @@
+/* Bootstrap Theme Override with Brand Colors */
+/* This file customizes Bootstrap components to use our brand color system */
+
+/* Import brand colors first */
+@import url('brand-colors.css');
+
+/* Global Font: Silka */
+@font-face {
+    font-family: "Silka";
+    src: url("https://www.eye.security/hubfs/silka-regular-webfont.woff") format("woff"),
+         url("https://www.eye.security/hubfs/silka-regular-webfont.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@charset "UTF-8";
+
+/* Silka Font System - Eye Security */
+@font-face {
+    font-display: swap;
+    font-family: Silka;
+    font-style: normal;
+    font-weight: 300;
+    src: url(https://www.eye.security/hubfs/8.%20Website%202023/Assets/Fonts/Silka/silka-light-webfont.ttf)
+}
+
+@font-face {
+    font-display: swap;
+    font-family: Silka;
+    font-style: normal;
+    font-weight: 400;
+    src: url(https://www.eye.security/hubfs/8.%20Website%202023/Assets/Fonts/Silka/Silka-Regular.otf)
+}
+
+@font-face {
+    font-display: swap;
+    font-family: Silka;
+    font-style: italic;
+    font-weight: 400;
+    src: url(https://www.eye.security/hubfs/8.%20Website%202023/Assets/Fonts/Silka/Silka-RegularItalic.otf)
+}
+
+@font-face {
+    font-display: swap;
+    font-family: Silka;
+    font-style: normal;
+    font-weight: 500;
+    src: url(https://www.eye.security/hubfs/8.%20Website%202023/Assets/Fonts/Silka/silka-medium-webfont.ttf)
+}
+
+@font-face {
+    font-display: swap;
+    font-family: Silka;
+    font-style: normal;
+    font-weight: 600;
+    src: url(https://www.eye.security/hubfs/8.%20Website%202023/Assets/Fonts/Silka/silka-semibold-webfont.ttf)
+}
+
+/* Eye Security Typography System */
+.h1, .h2, .h3, .h4, h1, h2, h3, h4, html {
+    font-family: Silka, sans-serif;
+}
+
+body {
+    font-size: 1rem;
+    line-height: 1.75;
+}
+
+@media screen and (min-width: 48em) {
+    body {
+        font-size: 1.125rem;
+        line-height: 1.8;
+    }
+}
+
+.p, p {
+    font-size: 1rem;
+    line-height: 1.75;
+    margin-bottom: 1rem;
+}
+
+.template-jobs .p, .template-jobs p {
+    font-weight: 300;
+}
+
+@media screen and (min-width: 62.5em) {
+    .p, p {
+        font-size: 1.125rem;
+        line-height: 1.8;
+    }
+}
+
+.h1, .h2, .h3, .h4, .h5, .h6, h1, h2, h3, h4, h5, h6 {
+    line-height: 1.2;
+    margin-bottom: 1rem;
+}
+
+.h1, h1 {
+    font-size: 2rem;
+    font-weight: 500;
+    line-height: 1.375;
+}
+
+.template-jobs .h1, .template-jobs h1 {
+    font-weight: 600;
+}
+
+@media screen and (min-width: 62.5em) {
+    .h1, h1 {
+        font-size: 2.75rem;
+        line-height: 1.3;
+    }
+}
+
+.h2, h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1.33;
+}
+
+@media screen and (min-width: 62.5em) {
+    .h2, h2 {
+        font-size: 2.25rem;
+        line-height: 1.5;
+    }
+}
+
+.h3, h3 {
+    font-size: 1.125rem;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+@media screen and (min-width: 62.5em) {
+    .h3, h3 {
+        font-size: 1.5rem;
+        line-height: 1.7;
+    }
+}
+
+.h4, h4 {
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+@media screen and (min-width: 62.5em) {
+    .h4, h4 {
+        font-size: 1.5rem;
+    }
+}
+
+.h5, h5 {
+    font-size: 1rem;
+}
+
+@media screen and (min-width: 62.5em) {
+    .h5, h5 {
+        font-size: 1.25rem;
+    }
+}
+
+.h6, h6 {
+    font-size: 1.125rem;
+}
+
+:root {
+    /* Set Bootstrap body font to Silka with sensible fallbacks */
+    --bs-body-font-family: "Silka", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+/* Heroicons Styling */
+.heroicon {
+    width: 1em;
+    height: 1em;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.heroicon-sm {
+    width: 0.875em;
+    height: 0.875em;
+}
+
+.heroicon-lg {
+    width: 1.25em;
+    height: 1.25em;
+}
+
+.heroicon-xl {
+    width: 1.5em;
+    height: 1.5em;
+}
+
+/* Heroicon animations */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+/* Style Variants - Improved Spacing */
+.style-editor {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    background: white;
+    box-shadow: var(--shadow-brand-sm);
+}
+
+.style-editor .row {
+    align-items: end;
+}
+
+.style-editor .form-check {
+    margin-top: 1.75rem !important;
+    margin-bottom: 0;
+    padding-left: 1.5rem;
+}
+
+.style-editor .form-check-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-text);
+    margin-left: 0.25rem;
+}
+
+.style-editor .btn-outline-danger {
+    margin-top: 1.75rem !important;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-button);
+    min-width: 44px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.style-editor .btn-outline-danger:hover {
+    background-color: var(--bs-danger);
+    border-color: var(--bs-danger);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+}
+
+.style-editor .btn-outline-danger .heroicon {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* Export Buttons - Modern Design */
+.export-buttons-container {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.export-btn {
+    padding: 0 !important;
+    border: none !important;
+    border-radius: var(--radius-button) !important;
+    background: none !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    transition: all 0.2s ease !important;
+    overflow: hidden;
+    min-width: 70px;
+    height: 60px;
+}
+
+.export-btn-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1rem;
+    height: 100%;
+    gap: 0.25rem;
+}
+
+.export-btn-csv .export-btn-content {
+    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    color: white;
+}
+
+.export-btn-json .export-btn-content {
+    background: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%);
+    color: white;
+}
+
+.export-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15) !important;
+}
+
+.export-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+}
+
+.export-btn:disabled .export-btn-content {
+    background: #E5E7EB !important;
+    color: #9CA3AF !important;
+}
+
+.export-btn span {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.export-btn .heroicon-sm {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+/* Top Header - Eye Security inspired */
+.top-header {
+    background-color: var(--brand-ice);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    padding: 0.5rem 0;
+    font-size: 0.875rem;
+}
+
+.top-nav-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+}
+
+.top-nav-list li {
+    margin-left: 1.5rem;
+}
+
+.top-nav-list li:first-child {
+    margin-left: 0;
+}
+
+.top-nav-list a {
+    text-decoration: none;
+    color: var(--brand-indigo);
+    font-size: 0.875rem;
+    font-weight: 400;
+    transition: color 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.top-nav-list a:hover {
+    color: var(--brand-indigo);
+    text-decoration: none;
+}
+
+.top-nav-list a i {
+    font-size: 0.75rem;
+    opacity: 0.8;
+}
+
+/* Incident Response Button */
+.header-button-container {
+    display: flex;
+    align-items: center;
+}
+
+.incident-response-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background-color: white;
+    color: var(--brand-indigo);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.875rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: var(--radius-button);
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.incident-response-button:hover {
+    background-color: rgba(255, 255, 255, 0.95);
+    color: var(--brand-indigo);
+    text-decoration: none;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.incident-response-button i {
+    font-size: 0.8rem;
+}
+
+/* Footer - Eye Security inspired */
+.site-footer {
+    background-color: var(--brand-indigo);
+    color: white;
+    padding: 3rem 0 1rem 0;
+    margin-top: 4rem;
+}
+
+.site-footer h5 {
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+}
+
+.footer-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.footer-links li {
+    margin-bottom: 0.75rem;
+}
+
+.footer-links a {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.2s ease;
+}
+
+.footer-links a:hover {
+    color: var(--brand-orange);
+    text-decoration: none;
+}
+
+.footer-divider {
+    border-color: rgba(255, 255, 255, 0.2);
+    margin: 2rem 0 1.5rem 0;
+}
+
+.footer-copyright,
+.footer-attribution {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+.footer-attribution strong {
+    color: var(--brand-orange);
+}
+
+@media (max-width: 768px) {
+    .site-footer {
+        padding: 2rem 0 1rem 0;
+        margin-top: 2rem;
+    }
+    
+    .site-footer h5 {
+        margin-bottom: 1rem;
+    }
+    
+    .footer-links li {
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* Button Overrides - Eye Security inspired rounded buttons */
+.btn {
+    border-radius: var(--radius-button) !important;
+    font-weight: 500;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.2s ease;
+}
+
+.btn-lg {
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+}
+
+.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+
+/* Fix dropdown toggle button sizing in input groups */
+.input-group .dropdown-toggle {
+    border-radius: 0 var(--radius-button) var(--radius-button) 0 !important;
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.9rem !important;
+}
+
+.input-group .dropdown-toggle i {
+    font-size: 0.8rem;
+}
+
+.btn-primary {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.btn-primary:hover {
+    background-color: var(--color-primary-hover);
+    border-color: var(--color-primary-hover);
+}
+
+.btn-primary:active,
+.btn-primary:focus {
+    background-color: var(--color-primary-active);
+    border-color: var(--color-primary-active);
+    box-shadow: 0 0 0 0.2rem rgba(var(--brand-indigo-rgb), 0.25);
+}
+
+.btn-secondary {
+    background-color: var(--color-secondary);
+    border-color: var(--color-secondary);
+    color: var(--brand-white);
+}
+
+.btn-secondary:hover {
+    background-color: var(--color-secondary-hover);
+    border-color: var(--color-secondary-hover);
+    color: var(--brand-white);
+}
+
+.btn-info {
+    background-color: var(--brand-ice);
+    border-color: var(--brand-ice);
+    color: var(--brand-grey);
+}
+
+.btn-warning {
+    background-color: var(--brand-lemon);
+    border-color: var(--brand-lemon);
+    color: var(--brand-grey);
+}
+
+/* Alert Overrides */
+.alert-primary {
+    background-color: rgba(var(--brand-indigo-rgb), 0.1);
+    border-color: rgba(var(--brand-indigo-rgb), 0.2);
+    color: var(--brand-indigo);
+}
+
+.alert-info {
+    background-color: rgba(var(--brand-ice-rgb), 0.3);
+    border-color: var(--brand-ice);
+    color: var(--brand-grey);
+}
+
+.alert-warning {
+    background-color: rgba(var(--brand-lemon-rgb), 0.3);
+    border-color: var(--brand-lemon);
+    color: var(--brand-grey);
+}
+
+/* Badge Overrides */
+.badge.bg-primary {
+    background-color: var(--brand-indigo) !important;
+}
+
+.badge.bg-secondary {
+    background-color: var(--brand-slate) !important;
+}
+
+.badge.bg-info {
+    background-color: var(--brand-ice) !important;
+    color: var(--brand-grey) !important;
+}
+
+.badge.bg-warning {
+    background-color: var(--brand-lemon) !important;
+    color: var(--brand-grey) !important;
+}
+
+/* Navigation Overrides */
+.navbar {
+    padding: 1rem 0;
+}
+
+.navbar .container {
+    max-width: 1200px;
+    padding: 0 1.5rem;
+}
+
+@media (max-width: 1400px) {
+    .navbar .container {
+        max-width: 1140px;
+    }
+}
+
+@media (max-width: 1200px) {
+    .navbar .container {
+        max-width: 960px;
+    }
+}
+
+@media (max-width: 992px) {
+    .navbar .container {
+        max-width: 720px;
+        padding: 0 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .navbar .container {
+        max-width: 540px;
+        padding: 0 0.75rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .navbar .container {
+        max-width: 100%;
+        padding: 0 1rem;
+    }
+}
+
+/* Global Container Overrides for Consistent Sizing */
+.container {
+    max-width: 1200px;
+    padding: 0 1.5rem;
+}
+
+@media (max-width: 1400px) {
+    .container {
+        max-width: 1140px;
+    }
+}
+
+@media (max-width: 1200px) {
+    .container {
+        max-width: 960px;
+    }
+}
+
+@media (max-width: 992px) {
+    .container {
+        max-width: 720px;
+        padding: 0 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        max-width: 540px;
+        padding: 0 0.75rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .container {
+        max-width: 100%;
+        padding: 0 1rem;
+    }
+}
+
+.navbar-brand {
+    color: var(--brand-white) !important;
+}
+
+.navbar-dark .navbar-nav .nav-link {
+    color: rgba(var(--brand-primary), 0.85);
+    position: relative;
+}
+
+.navbar-dark .navbar-nav .nav-link:hover,
+.navbar-dark .navbar-nav .nav-link:focus {
+    color: rgba(var(--brand-primary), 1);
+}
+
+.navbar-dark .navbar-nav .nav-link:hover::after,
+.navbar-dark .navbar-nav .nav-link:focus::after {
+    content: "";
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    height: 2px;
+    background-color: var(--brand-orange);
+    border-radius: 1px;
+}
+
+.navbar-dark .navbar-nav .nav-link.active {
+    color: var(--brand-primary) !important;
+}
+
+/* Card Overrides */
+.card {
+    border-color: var(--color-border);
+    box-shadow: var(--shadow-brand-sm);
+}
+
+.card-header {
+    background-color: var(--color-background-soft);
+    border-bottom-color: var(--color-border);
+}
+
+/* Form Overrides */
+.form-control:focus {
+    border-color: var(--brand-ice);
+    box-shadow: 0 0 0 0.2rem rgba(var(--brand-ice-rgb), 0.25);
+}
+
+.form-select:focus {
+    border-color: var(--brand-ice);
+    box-shadow: 0 0 0 0.2rem rgba(var(--brand-ice-rgb), 0.25);
+}
+
+/* Progress Bar Overrides */
+.progress-bar {
+    background-color: var(--color-primary);
+}
+
+.progress-bar.bg-info {
+    background-color: var(--brand-ice) !important;
+}
+
+.progress-bar.bg-warning {
+    background-color: var(--brand-lemon) !important;
+}
+
+/* Pagination Overrides */
+.page-link {
+    color: var(--color-primary);
+}
+
+.page-link:hover {
+    color: var(--color-primary-hover);
+    background-color: var(--brand-ice);
+    border-color: var(--brand-ice);
+}
+
+.page-item.active .page-link {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+/* Dropdown Overrides */
+.dropdown-menu {
+    border-color: var(--color-border);
+    box-shadow: var(--shadow-brand);
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+    background-color: var(--brand-ice);
+    color: var(--brand-grey);
+}
+
+.dropdown-item.active {
+    background-color: var(--color-primary);
+    color: var(--brand-white);
+}
+
+/* Modal Overrides */
+.modal-header {
+    border-bottom-color: var(--color-border);
+}
+
+.modal-footer {
+    border-top-color: var(--color-border);
+}
+
+/* Table Overrides */
+.table {
+    --bs-table-border-color: var(--color-border);
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) > td {
+    background-color: var(--color-background-soft);
+}
+
+.table-hover > tbody > tr:hover > td {
+    background-color: var(--brand-ice);
+}
+
+/* Text Color Utilities */
+.text-primary {
+    color: var(--color-primary) !important;
+}
+
+.text-secondary {
+    color: var(--color-text-light) !important;
+}
+
+.text-info {
+    color: var(--brand-ice) !important;
+}
+
+.text-warning {
+    color: var(--brand-lemon) !important;
+}
+
+/* Background Color Utilities */
+.bg-primary {
+    background-color: var(--color-primary) !important;
+}
+
+.bg-secondary {
+    background-color: var(--color-surface) !important;
+}
+
+.bg-light {
+    background-color: var(--color-background-soft) !important;
+}
+
+.bg-dark {
+    background-color: var(--brand-charcoal) !important;
+}
+
+/* Border Color Utilities */
+.border-primary {
+    border-color: var(--color-primary) !important;
+}
+
+.border-secondary {
+    border-color: var(--color-border) !important;
+}
+
+/* Link Overrides */
+a {
+    color: var(--color-primary);
+}
+
+a:hover {
+    color: var(--color-primary-hover);
+}
+
+/* Focus States for Accessibility */
+.btn:focus,
+.form-control:focus,
+.form-select:focus {
+    box-shadow: 0 0 0 0.2rem rgba(var(--brand-indigo-rgb), 0.25);
+}
+
+/* Custom Brand Components */
+.brand-gradient-bg {
+    background: var(--gradient-brand-primary);
+    color: var(--brand-white);
+}
+
+.brand-card {
+    background: var(--gradient-brand-card);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-brand);
+}
+
+.brand-hero {
+    background: var(--color-primary);
+    color: var(--color-primary);
+}
+
+/* Global Bootstrap Variable Mappings */
+:root {
+    --bs-body-font-family: "Silka", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    --bs-body-color: var(--color-text);
+    --bs-body-bg: var(--color-background);
+    --bs-border-color: var(--color-border);
+    --bs-link-color: var(--link-color);
+    --bs-link-hover-color: var(--link-hover-color);
+    --bs-border-radius: var(--radius-md);
+    --bs-border-radius-sm: var(--radius-sm);
+    --bs-border-radius-lg: var(--radius-lg);
+    --bs-box-shadow: var(--shadow-brand-sm);
+}
+
+/* Typography */
+body {
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+small, .small { color: var(--color-text-light); }
+
+/* Enhanced Buttons - Eye Security Style */
+.btn-primary {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--brand-white);
+    border-radius: var(--radius-button);
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast);
+}
+.btn-primary:hover {
+    background-color: var(--color-primary-hover);
+    border-color: var(--color-primary-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-brand-sm);
+}
+.btn-primary:active,
+.btn-primary:focus {
+    background-color: var(--color-primary-active);
+    border-color: var(--color-primary-active);
+    box-shadow: 0 0 0 0.2rem var(--ring-color);
+}
+
+.btn-secondary {
+    background-color: var(--color-secondary);
+    border-color: var(--color-secondary);
+    color: var(--brand-white);
+    border-radius: var(--radius-button);
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast);
+}
+.btn-secondary:hover {
+    background-color: var(--color-secondary-hover);
+    border-color: var(--color-secondary-hover);
+    color: var(--brand-white);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-brand-sm);
+}
+
+.btn-info {
+    background-color: var(--brand-ice);
+    border-color: var(--brand-ice);
+    color: var(--brand-grey);
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.btn-warning {
+    background-color: var(--brand-lemon);
+    border-color: var(--brand-lemon);
+    color: var(--brand-grey);
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast);
+}
+
+/* Outline buttons */
+.btn-outline-primary { color: var(--color-primary); border-color: var(--color-primary); }
+.btn-outline-primary:hover { color: var(--brand-white); background-color: var(--color-primary); border-color: var(--color-primary); }
+.btn-outline-secondary { color: var(--color-secondary); border-color: var(--color-secondary); }
+.btn-outline-secondary:hover { color: var(--brand-white); background-color: var(--color-secondary); border-color: var(--color-secondary); }
+
+/* CTA variant */
+.btn-cta {
+    background: var(--gradient-brand-primary);
+    color: var(--brand-white);
+    border: 0;
+    border-radius: var(--radius-button);
+    box-shadow: var(--shadow-brand);
+}
+.btn-cta:hover {
+    filter: brightness(1.05);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-brand-lg);
+}
+.btn-cta:active, .btn-cta:focus { box-shadow: 0 0 0 0.2rem var(--ring-color-accent); }
+
+/* Cards & Surfaces */
+.card { border-color: var(--color-border); box-shadow: var(--shadow-brand-sm); border-radius: var(--radius-md); }
+.card-header { background-color: var(--color-background-soft); border-bottom-color: var(--color-border); border-top-left-radius: var(--radius-md); border-top-right-radius: var(--radius-md); }
+
+/* Forms */
+.form-control:focus { border-color: var(--brand-ice); box-shadow: 0 0 0 0.2rem var(--ring-color-accent); }
+.form-select:focus { border-color: var(--brand-ice); box-shadow: 0 0 0 0.2rem var(--ring-color-accent); }
+input::placeholder, textarea::placeholder { color: rgba(var(--brand-slate-rgb), 0.9); }
+small.form-text, .form-text { color: var(--color-text-light); }
+
+/* Dropdown */
+.dropdown-menu { border-radius: var(--radius-md); }
+
+/* Modals */
+.modal-content { border-radius: var(--radius-md); box-shadow: var(--shadow-brand-lg); }
+
+/* Alerts */
+.alert { border-radius: var(--radius-md); }
+
+/* Links & Pagination */
+.page-link { transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast); }
+a { transition: color var(--transition-fast); }
+
+/* Accessibility */
+.btn:focus, .form-control:focus, .form-select:focus { box-shadow: 0 0 0 0.2rem var(--ring-color-accent); }
+:where(button, [role="button"], a, input, select, textarea):focus-visible { outline: none; box-shadow: 0 0 0 0.2rem var(--ring-color-accent); }
