@@ -1,4 +1,10 @@
-<img src="./images/eye_logo.png" width="150" alt="Description">
+<div align="center">
+     <picture>
+          <source media="(prefers-color-scheme: dark)" srcset="./images/eye-logo-dark.png">
+          <source media="(prefers-color-scheme: light)" srcset="./images/eye-logo-light.png">
+          <img alt="Eye Security - Prompt Injection for the Good" width="150" src="./images/eye-logo-light.png">
+     </picture>
+</div>
 
 # Prompt Injection for Good
 A prototype tool designed to address the "shadow AI" challenge in corporate environments. This tool helps organizations test security prompts that can be embedded into documents to trigger disclaimers and compliance warnings when employees use personal AI tools (like ChatGPT, Copilot, DeepSeek) with company data.
@@ -122,4 +128,4 @@ To add new LLM providers:
 
 ## 📝 License
 
-MIT License - see LICENSE file for details.
+GPLv3 License - see LICENSE file for details.
