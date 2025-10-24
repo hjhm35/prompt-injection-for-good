@@ -1,4 +1,4 @@
-<div align="center">
+<div>
      <picture>
           <source media="(prefers-color-scheme: dark)" srcset="./images/eye-logo-dark.png">
           <source media="(prefers-color-scheme: light)" srcset="./images/eye-logo-light.png">
